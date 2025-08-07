@@ -1,0 +1,28 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Country {
+  id        Int    @id @default(autoincrement())
+  name      String
+  capital   String?
+  population Int?
+  area      Float?
+  currency  String?
+  continent String
+}
+
+model Animal {
+  id                  Int    @id @default(autoincrement())
+  name                String
+  species             String?
+  habitat             String?
+  diet                String?
+  conservation_status String?
+  category            String
+}

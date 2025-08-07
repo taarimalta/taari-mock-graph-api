@@ -1,0 +1,46 @@
+# Sample GraphQL queries and mutations for Country
+
+# Query all countries
+query GetCountries {
+  countries {
+    id
+    name
+    continent
+  }
+}
+
+# Query a single country by ID
+query GetCountry {
+  country(id: 1) {
+    id
+    name
+    continent
+  }
+}
+
+# Create a new country
+mutation CreateCountry {
+  createCountry(name: "Nepal", continent: Asia) {
+    id
+    name
+    continent
+  }
+}
+
+# Update a country
+mutation UpdateCountry {
+  updateCountry(id: 1, name: "Nepal Updated", continent: Asia) {
+    id
+    name
+    continent
+  }
+}
+
+# Delete a country
+mutation DeleteCountry {
+  deleteCountry(id: 1) {
+    id
+    name
+    continent
+  }
+}

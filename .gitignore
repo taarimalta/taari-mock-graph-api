@@ -1,0 +1,21 @@
+# Node
+node_modules/
+dist/
+*.log
+.DS_Store
+
+# Environment
+.env
+.env.*
+
+# TypeScript
+*.tsbuildinfo
+
+# SQLite/Prisma
+prisma/dev.db*
+prisma/migrations/
+*.sqlite
+*.sqlite-journal
+
+# OS
+Thumbs.db

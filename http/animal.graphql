@@ -1,0 +1,46 @@
+# Sample GraphQL queries and mutations for Animal
+
+# Query all animals
+query GetAnimals {
+  animals {
+    id
+    name
+    classification
+  }
+}
+
+# Query a single animal by ID
+query GetAnimal {
+  animal(id: 1) {
+    id
+    name
+    classification
+  }
+}
+
+# Create a new animal
+mutation CreateAnimal {
+  createAnimal(name: "Tiger", classification: Mammal) {
+    id
+    name
+    classification
+  }
+}
+
+# Update an animal
+mutation UpdateAnimal {
+  updateAnimal(id: 1, name: "Tiger Updated", classification: Mammal) {
+    id
+    name
+    classification
+  }
+}
+
+# Delete an animal
+mutation DeleteAnimal {
+  deleteAnimal(id: 1) {
+    id
+    name
+    classification
+  }
+}
