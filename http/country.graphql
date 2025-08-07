@@ -1,3 +1,4 @@
+
 # Sample GraphQL queries and mutations for Country
 
 # Query all countries
@@ -5,6 +6,10 @@ query GetCountries {
   countries {
     id
     name
+    capital
+    population
+    area
+    currency
     continent
   }
 }
@@ -14,24 +19,51 @@ query GetCountry {
   country(id: 1) {
     id
     name
+    capital
+    population
+    area
+    currency
     continent
   }
 }
 
 # Create a new country
 mutation CreateCountry {
-  createCountry(name: "Nepal", continent: Asia) {
+  createCountry(
+    name: "Nepal"
+    capital: "Kathmandu"
+    population: 30000000
+    area: 147516
+    currency: "NPR"
+    continent: asia
+  ) {
     id
     name
+    capital
+    population
+    area
+    currency
     continent
   }
 }
 
 # Update a country
 mutation UpdateCountry {
-  updateCountry(id: 1, name: "Nepal Updated", continent: Asia) {
+  updateCountry(
+    id: 1
+    name: "Nepal Updated"
+    capital: "Kathmandu"
+    population: 31000000
+    area: 147516
+    currency: "NPR"
+    continent: asia
+  ) {
     id
     name
+    capital
+    population
+    area
+    currency
     continent
   }
 }
@@ -41,6 +73,10 @@ mutation DeleteCountry {
   deleteCountry(id: 1) {
     id
     name
+    capital
+    population
+    area
+    currency
     continent
   }
 }

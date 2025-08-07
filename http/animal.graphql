@@ -1,3 +1,4 @@
+
 # Sample GraphQL queries and mutations for Animal
 
 # Query all animals
@@ -5,7 +6,11 @@ query GetAnimals {
   animals {
     id
     name
-    classification
+    species
+    habitat
+    diet
+    conservation_status
+    category
   }
 }
 
@@ -14,25 +19,52 @@ query GetAnimal {
   animal(id: 1) {
     id
     name
-    classification
+    species
+    habitat
+    diet
+    conservation_status
+    category
   }
 }
 
 # Create a new animal
 mutation CreateAnimal {
-  createAnimal(name: "Tiger", classification: Mammal) {
+  createAnimal(
+    name: "Tiger"
+    species: "Panthera tigris"
+    habitat: "Forest"
+    diet: "Carnivore"
+    conservation_status: "Endangered"
+    category: mammals
+  ) {
     id
     name
-    classification
+    species
+    habitat
+    diet
+    conservation_status
+    category
   }
 }
 
 # Update an animal
 mutation UpdateAnimal {
-  updateAnimal(id: 1, name: "Tiger Updated", classification: Mammal) {
+  updateAnimal(
+    id: 1
+    name: "Tiger Updated"
+    species: "Panthera tigris altaica"
+    habitat: "Taiga"
+    diet: "Carnivore"
+    conservation_status: "Endangered"
+    category: mammals
+  ) {
     id
     name
-    classification
+    species
+    habitat
+    diet
+    conservation_status
+    category
   }
 }
 
@@ -41,6 +73,6 @@ mutation DeleteAnimal {
   deleteAnimal(id: 1) {
     id
     name
-    classification
+    category
   }
 }

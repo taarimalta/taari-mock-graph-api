@@ -1,0 +1,29 @@
+# Example: Search animals by generic search
+query SearchAnimals {
+  animals(search: "cat") {
+    id
+    name
+    species
+    habitat
+    category
+  }
+}
+
+# Example: Filter animals by category and habitat
+query FilterAnimals {
+  animals(filter: { category: mammals, habitat: "forest" }) {
+    id
+    name
+    habitat
+    category
+  }
+}
+
+# Example: Combined search and filter
+query SearchAndFilterAnimals {
+  animals(search: "tiger", filter: { category: mammals }) {
+    id
+    name
+    category
+  }
+}

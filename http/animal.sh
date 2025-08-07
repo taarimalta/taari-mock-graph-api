@@ -24,6 +24,7 @@ for CATEGORY in mammals birds reptiles amphibians fish insects; do
   CATEGORY_IDS[$CATEGORY]=$ID
 done
 
+
 # Query by each category's animal ID
 echo "\nQuerying one animal from each category:"
 for CATEGORY in "${!CATEGORY_IDS[@]}"; do
@@ -35,6 +36,23 @@ for CATEGORY in "${!CATEGORY_IDS[@]}"; do
     }' $API_URL | jq .
   fi
 done
+
+# --- Filtering tests ---
+
+echo "\nTest: Search animals by generic search (e.g., 'cat')"
+curl -s -X POST -H "Content-Type: application/json" --data '{
+  "query": "{ animals(search: \"cat\") { id name species habitat category } }"
+}' $API_URL | jq .
+
+echo "\nTest: Filter animals by category and habitat (e.g., mammals, forest)"
+curl -s -X POST -H "Content-Type: application/json" --data '{
+  "query": "{ animals(filter: { category: mammals, habitat: \"forest\" }) { id name habitat category } }"
+}' $API_URL | jq .
+
+echo "\nTest: Combined search and filter (search: 'tiger', filter: category mammals)"
+curl -s -X POST -H "Content-Type: application/json" --data '{
+  "query": "{ animals(search: \"tiger\", filter: { category: mammals }) { id name category } }"
+}' $API_URL | jq .
 
 # Update the first animal (mammals)
 MAMMAL_ID=${CATEGORY_IDS[mammals]}

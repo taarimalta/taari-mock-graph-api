@@ -19,3 +19,6 @@ prisma/migrations/
 
 # OS
 Thumbs.db
+
+
+.vscode

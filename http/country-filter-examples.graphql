@@ -1,0 +1,29 @@
+# Example: Search countries by generic search
+query SearchCountries {
+  countries(search: "republic") {
+    id
+    name
+    continent
+    capital
+    currency
+  }
+}
+
+# Example: Filter countries by continent and population
+query FilterCountries {
+  countries(filter: { continent: asia, populationMin: 1000000 }) {
+    id
+    name
+    population
+    continent
+  }
+}
+
+# Example: Combined search and filter
+query SearchAndFilterCountries {
+  countries(search: "united", filter: { continent: europe }) {
+    id
+    name
+    continent
+  }
+}

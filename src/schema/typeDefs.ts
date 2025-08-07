@@ -41,10 +41,31 @@ export const typeDefs = gql`
   }
 
 
+
+  input CountryFilter {
+    continent: Continent
+    populationMin: Int
+    populationMax: Int
+    areaMin: Float
+    areaMax: Float
+    name: String
+    capital: String
+    currency: String
+  }
+
+  input AnimalFilter {
+    category: AnimalCategory
+    species: String
+    habitat: String
+    diet: String
+    conservation_status: String
+    name: String
+  }
+
   type Query {
-    countries: [Country!]!
+    countries(search: String, filter: CountryFilter): [Country!]!
     country(id: ID!): Country
-    animals: [Animal!]!
+    animals(search: String, filter: AnimalFilter): [Animal!]!
     animal(id: ID!): Animal
   }
 

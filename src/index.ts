@@ -6,6 +6,7 @@ import bodyParser from 'body-parser';
 import { typeDefs } from './schema/typeDefs';
 import { countryResolvers } from './resolvers/country';
 import { animalResolvers } from './resolvers/animal';
+import logger from './logger';
 import { createContext } from './context';
 
 import type { ApolloServerPlugin, GraphQLRequestContext, GraphQLRequestContextWillSendResponse, GraphQLRequestContextDidEncounterErrors } from '@apollo/server';
@@ -13,14 +14,14 @@ import type { ApolloServerPlugin, GraphQLRequestContext, GraphQLRequestContextWi
 const loggingPlugin: ApolloServerPlugin = {
   async requestDidStart(requestContext: GraphQLRequestContext<any>) {
     const start = Date.now();
-    console.log(`\n➡️  Incoming GraphQL request: ${requestContext.request.operationName || 'Anonymous'}\nQuery: ${requestContext.request.query?.replace(/\s+/g, ' ').trim()}\nVariables: ${JSON.stringify(requestContext.request.variables)}`);
+    logger.info(`➡️  Incoming GraphQL request: ${requestContext.request.operationName || 'Anonymous'} | Query: ${requestContext.request.query?.replace(/\s+/g, ' ').trim()} | Variables: ${JSON.stringify(requestContext.request.variables)}`);
     return {
       async willSendResponse(context: GraphQLRequestContextWillSendResponse<any>) {
         const duration = Date.now() - start;
-        console.log(`⬅️  Response sent (${context.request.operationName || 'Anonymous'}) in ${duration}ms\n`);
+        logger.info(`⬅️  Response sent (${context.request.operationName || 'Anonymous'}) in ${duration}ms`);
       },
       async didEncounterErrors(context: GraphQLRequestContextDidEncounterErrors<any>) {
-        console.error('❌ GraphQL Error:', context.errors);
+        logger.error({ errors: context.errors }, '❌ GraphQL Error');
       }
     };
   }
@@ -51,12 +52,12 @@ async function startServer() {
 
   // Logging middleware for all /graphql requests
   app.use('/graphql', (req, res, next) => {
-    console.log('--- Incoming HTTP request to /graphql ---');
-    console.log('Method:', req.method);
-    console.log('Path:', req.originalUrl);
-    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    logger.info('--- Incoming HTTP request to /graphql ---');
+    logger.info('Method: ' + req.method);
+    logger.info('Path: ' + req.originalUrl);
+    logger.info('Headers: ' + JSON.stringify(req.headers, null, 2));
     if (req.body && Object.keys(req.body).length > 0) {
-      console.log('Body:', JSON.stringify(req.body, null, 2));
+      logger.info('Body: ' + JSON.stringify(req.body, null, 2));
     }
     next();
   });
@@ -65,7 +66,7 @@ async function startServer() {
 
   const port = process.env.PORT || 4000;
   app.listen(port, () => {
-    console.log(`🚀  Server ready at http://localhost:${port}/graphql`);
+    logger.info(`🚀  Server ready at http://localhost:${port}/graphql`);
   });
 }
 
