@@ -10,7 +10,8 @@
     "start": "node dist/index.js",
     "db:generate": "npx prisma generate",
     "db:migrate": "npx prisma migrate dev",
-    "db:seed": "ts-node prisma/seed.ts"
+    "db:seed": "ts-node prisma/seed.ts",
+    "test": "jest --detectOpenHandles --forceExit"
   },
   "keywords": [
     "graphql",
@@ -35,8 +36,14 @@
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
+    "@types/jest": "^30.0.0",
     "@types/node": "^18.16.0",
+    "@types/supertest": "^6.0.3",
+    "apollo-server": "^3.13.0",
+    "jest": "^30.0.5",
     "prisma": "^4.15.0",
+    "supertest": "^7.1.4",
+    "ts-jest": "^29.4.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.0.0"
   }

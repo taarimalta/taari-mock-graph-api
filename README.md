@@ -26,7 +26,226 @@ A developer-friendly mock GraphQL API for rapid prototyping and testing, built w
    ```
    The API will be available at [http://localhost:4000/graphql](http://localhost:4000/graphql)
 
-## 🧩 API Overview
+
+## 🧩 Pagination, Sorting, and Filtering
+
+### Paginated Queries
+
+
+#### Pagination Examples
+#### How to Specify the Next Page (Cursor-Based Pagination)
+
+To fetch the next page of results, use the `after` argument in your query. Set its value to the `endCursor` returned from the previous page's response. This is the recommended best practice for cursor-based pagination in GraphQL (see Apollo, Contentful, graphql.org).
+
+**Step-by-step guide:**
+1. Run your initial query with a `first` argument to specify the page size.
+2. The response will include a `pagination` object with an `endCursor` and a `hasNext` boolean.
+3. To fetch the next page, use the same query but set the `after` argument to the value of `endCursor` from the previous response.
+4. Repeat until `hasNext` is false.
+
+**Example:**
+```graphql
+query {
+  countriesPaginated(args: { first: 3 }) {
+    data { id name population }
+    pagination { hasNext endCursor }
+  }
+}
+```
+Suppose the response includes `"endCursor": "YXJyYXljb25uZWN0aW9uOjQ="` and `"hasNext": true.
+
+To get the next page:
+```graphql
+query {
+  countriesPaginated(args: { first: 3, after: "YXJyYXljb25uZWN0aW9uOjQ=" }) {
+    data { id name population }
+    pagination { hasNext endCursor }
+  }
+}
+```
+Continue this process until `hasNext` is false.
+
+**Best Practices:**
+- Always use the `endCursor` from the previous response for the `after` argument.
+- Do not assume cursors are sequential or guess their values; always use the provided cursor.
+- For backward pagination, use the `before` argument with the `startCursor` from the next page.
+- Cursors should be treated as opaque values.
+
+For more details, see:
+- [Apollo GraphQL Cursor Pagination](https://www.apollographql.com/docs/react/pagination/cursor-based)
+- [GraphQL.org Pagination](https://graphql.org/learn/pagination/)
+- [Contentful Cursor Pagination Tutorial](https://www.contentful.com/blog/graphql-pagination-cursor-offset-tutorials/)
+
+
+**Fetch first page (forward pagination):**
+```graphql
+query {
+  countriesPaginated(args: { first: 3 }) {
+    data { id name population }
+    pagination { hasNext hasPrevious startCursor endCursor totalCount }
+  }
+}
+```
+Sample response:
+```json
+{
+  "data": {
+    "countriesPaginated": {
+      "data": [
+        { "id": "6", "name": "Australia", "population": 25687041 },
+        { "id": "5", "name": "Brazil", "population": 212559417 },
+        { "id": "2", "name": "China", "population": 1402112000 }
+      ],
+      "pagination": {
+        "hasNext": true,
+        "hasPrevious": false,
+        "startCursor": "<base64>",
+        "endCursor": "<base64>",
+        "totalCount": 6
+      }
+    }
+  }
+}
+```
+
+
+**Fetch next page using `after` cursor:**
+```graphql
+query {
+  countriesPaginated(args: { first: 3, after: "<END_CURSOR_FROM_PREVIOUS_PAGE>" }) {
+    data { id name population }
+    pagination { hasNext hasPrevious startCursor endCursor totalCount }
+  }
+}
+```
+Sample response:
+```json
+{
+  "data": {
+    "countriesPaginated": {
+      "data": [
+        { "id": "3", "name": "France", "population": 67081000 },
+        { "id": "4", "name": "United States", "population": 331893745 },
+        { "id": "1", "name": "Nigeria", "population": 206139589 }
+      ],
+      "pagination": {
+        "hasNext": false,
+        "hasPrevious": true,
+        "startCursor": "<base64>",
+        "endCursor": "<base64>",
+        "totalCount": 6
+      }
+    }
+  }
+}
+```
+
+
+**Fetch previous page using `before` cursor (backward pagination):**
+```graphql
+query {
+  countriesPaginated(args: { last: 3, before: "<START_CURSOR_FROM_NEXT_PAGE>" }) {
+    data { id name population }
+    pagination { hasNext hasPrevious startCursor endCursor totalCount }
+  }
+}
+```
+Sample response:
+```json
+{
+  "data": {
+    "countriesPaginated": {
+      "data": [
+        { "id": "6", "name": "Australia", "population": 25687041 },
+        { "id": "5", "name": "Brazil", "population": 212559417 },
+        { "id": "2", "name": "China", "population": 1402112000 }
+      ],
+      "pagination": {
+        "hasNext": true,
+        "hasPrevious": false,
+        "startCursor": "<base64>",
+        "endCursor": "<base64>",
+        "totalCount": 6
+      }
+    }
+  }
+}
+```
+
+
+**Filtering and sorting with pagination:**
+```graphql
+query {
+  countriesPaginated(
+    filter: { continent: europe, populationMin: 1000000 },
+    orderBy: { field: POPULATION, direction: DESC },
+    args: { first: 5 }
+  ) {
+    data { id name population continent }
+    pagination { hasNext hasPrevious startCursor endCursor totalCount }
+  }
+}
+```
+Sample response:
+```json
+{
+  "data": {
+    "countriesPaginated": {
+      "data": [
+        { "id": "3", "name": "France", "population": 67081000, "continent": "europe" }
+      ],
+      "pagination": {
+        "hasNext": false,
+        "hasPrevious": false,
+        "startCursor": "<base64>",
+        "endCursor": "<base64>",
+        "totalCount": 1
+      }
+    }
+  }
+}
+```
+
+
+**Animal pagination example:**
+```graphql
+query {
+  animalsPaginated(args: { first: 2 }) {
+    data { id name species }
+    pagination { hasNext hasPrevious startCursor endCursor totalCount }
+  }
+}
+```
+Sample response:
+```json
+{
+  "data": {
+    "animalsPaginated": {
+      "data": [
+        { "id": "1", "name": "Cheetah", "species": "Acinonyx jubatus" },
+        { "id": "2", "name": "Bald Eagle", "species": "Haliaeetus leucocephalus" }
+      ],
+      "pagination": {
+        "hasNext": true,
+        "hasPrevious": false,
+        "startCursor": "<base64>",
+        "endCursor": "<base64>",
+        "totalCount": 6
+      }
+    }
+  }
+}
+```
+
+#### Cursor Format
+- Cursors are base64-encoded JSON objects: `{ id, orderField, orderValue, direction }`
+- Use `startCursor` and `endCursor` for pagination navigation
+
+#### Filtering and Sorting
+- Use `filter` input for advanced filtering
+- Use `orderBy` input for sorting by supported fields
+
+See `http/country-pagination-examples.graphql` and `http/animal-pagination-examples.graphql` for more examples.
 
 ### Entities
 - **Country**: `id`, `name`, `capital`, `population`, `area`, `currency`, `continent`

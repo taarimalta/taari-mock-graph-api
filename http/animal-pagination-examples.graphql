@@ -1,0 +1,70 @@
+# Animal Pagination Example Queries
+
+# Forward pagination (first page)
+animalsPaginated(args: { first: 5 }) {
+  data {
+    id
+    name
+    species
+  }
+  pagination {
+    hasNext
+    hasPrevious
+    startCursor
+    endCursor
+    totalCount
+  }
+}
+
+# Forward pagination (next page)
+animalsPaginated(args: { first: 5, after: "<CURSOR_FROM_PREVIOUS_PAGE>" }) {
+  data {
+    id
+    name
+    species
+  }
+  pagination {
+    hasNext
+    hasPrevious
+    startCursor
+    endCursor
+    totalCount
+  }
+}
+
+# Backward pagination
+animalsPaginated(args: { last: 5, before: "<CURSOR_FROM_NEXT_PAGE>" }) {
+  data {
+    id
+    name
+    species
+  }
+  pagination {
+    hasNext
+    hasPrevious
+    startCursor
+    endCursor
+    totalCount
+  }
+}
+
+# Filtering and sorting
+animalsPaginated(
+  filter: { category: mammals, species: "Canis" },
+  orderBy: { field: SPECIES, direction: ASC },
+  args: { first: 10 }
+) {
+  data {
+    id
+    name
+    species
+    category
+  }
+  pagination {
+    hasNext
+    hasPrevious
+    startCursor
+    endCursor
+    totalCount
+  }
+}

@@ -1,0 +1,70 @@
+# Country Pagination Example Queries
+
+# Forward pagination (first page)
+countriesPaginated(args: { first: 5 }) {
+  data {
+    id
+    name
+    population
+  }
+  pagination {
+    hasNext
+    hasPrevious
+    startCursor
+    endCursor
+    totalCount
+  }
+}
+
+# Forward pagination (next page)
+countriesPaginated(args: { first: 5, after: "<CURSOR_FROM_PREVIOUS_PAGE>" }) {
+  data {
+    id
+    name
+    population
+  }
+  pagination {
+    hasNext
+    hasPrevious
+    startCursor
+    endCursor
+    totalCount
+  }
+}
+
+# Backward pagination
+countriesPaginated(args: { last: 5, before: "<CURSOR_FROM_NEXT_PAGE>" }) {
+  data {
+    id
+    name
+    population
+  }
+  pagination {
+    hasNext
+    hasPrevious
+    startCursor
+    endCursor
+    totalCount
+  }
+}
+
+# Filtering and sorting
+countriesPaginated(
+  filter: { continent: europe, populationMin: 1000000 },
+  orderBy: { field: POPULATION, direction: DESC },
+  args: { first: 10 }
+) {
+  data {
+    id
+    name
+    population
+    continent
+  }
+  pagination {
+    hasNext
+    hasPrevious
+    startCursor
+    endCursor
+    totalCount
+  }
+}

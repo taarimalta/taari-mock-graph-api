@@ -4,26 +4,40 @@ const prisma = new PrismaClient();
 export const animalResolvers = {
   Query: {
     animals: (_: any, args: { search?: string, filter?: any }) => {
-      const where: any = {};
-      if (args.filter) {
-        if (args.filter.category) where.category = args.filter.category;
-        if (args.filter.species) where.species = { contains: args.filter.species };
-        if (args.filter.habitat) where.habitat = { contains: args.filter.habitat };
-        if (args.filter.diet) where.diet = { contains: args.filter.diet };
-        if (args.filter.conservation_status) where.conservation_status = { contains: args.filter.conservation_status };
-        if (args.filter.name) where.name = { contains: args.filter.name };
-      }
-      if (args.search) {
-        where.OR = [
-          { name: { contains: args.search } },
-          { species: { contains: args.search } },
-          { habitat: { contains: args.search } },
-          { diet: { contains: args.search } },
-          { conservation_status: { contains: args.search } },
-          { category: { contains: args.search } }
-        ];
-      }
+      // Deprecated: Use animalsPaginated
+      const { buildAnimalWhere } = require('../utils/filtering');
+      const where = buildAnimalWhere(args.filter, args.search);
       return prisma.animal.findMany({ where });
+    },
+    animalsPaginated: async (_: any, args: {
+      search?: string,
+      filter?: any,
+      orderBy?: any,
+      args?: any
+    }) => {
+      const { buildAnimalWhere } = require('../utils/filtering');
+      const { mapAnimalOrderField, buildOrderBy } = require('../utils/sorting');
+      const { paginate } = require('../utils/pagination');
+
+      const where = buildAnimalWhere(args.filter, args.search);
+      const orderField = args.orderBy?.field || 'NAME';
+      const direction = args.orderBy?.direction || 'ASC';
+      const orderBy = buildOrderBy(mapAnimalOrderField(orderField), direction);
+      const pageArgs = args.args || { first: 20 };
+
+      const result = await paginate({
+        model: prisma.animal,
+        where,
+        orderBy,
+        first: pageArgs.first,
+        after: pageArgs.after,
+        last: pageArgs.last,
+        before: pageArgs.before,
+      });
+      return {
+        data: Array.isArray(result.items) ? result.items : [],
+        pagination: result.pagination,
+      };
     },
     animal: (_: any, args: { id: number }) =>
       prisma.animal.findUnique({ where: { id: Number(args.id) } }),

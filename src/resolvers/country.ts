@@ -4,32 +4,46 @@ const prisma = new PrismaClient();
 export const countryResolvers = {
   Query: {
     countries: (_: any, args: { search?: string, filter?: any }) => {
-      const where: any = {};
-      if (args.filter) {
-        if (args.filter.continent) where.continent = args.filter.continent;
-        if (args.filter.populationMin || args.filter.populationMax) {
-          where.population = {};
-          if (args.filter.populationMin) where.population.gte = args.filter.populationMin;
-          if (args.filter.populationMax) where.population.lte = args.filter.populationMax;
-        }
-        if (args.filter.areaMin || args.filter.areaMax) {
-          where.area = {};
-          if (args.filter.areaMin) where.area.gte = args.filter.areaMin;
-          if (args.filter.areaMax) where.area.lte = args.filter.areaMax;
-        }
-        if (args.filter.name) where.name = { contains: args.filter.name, mode: 'insensitive' };
-        if (args.filter.capital) where.capital = { contains: args.filter.capital, mode: 'insensitive' };
-        if (args.filter.currency) where.currency = { contains: args.filter.currency, mode: 'insensitive' };
-      }
-      if (args.search) {
-        where.OR = [
-          { name: { contains: args.search, mode: 'insensitive' } },
-          { capital: { contains: args.search, mode: 'insensitive' } },
-          { currency: { contains: args.search, mode: 'insensitive' } },
-          { continent: { contains: args.search, mode: 'insensitive' } }
-        ];
-      }
+      // Deprecated: Use countriesPaginated
+      const { buildCountryWhere } = require('../utils/filtering');
+      const where = buildCountryWhere(args.filter, args.search);
       return prisma.country.findMany({ where });
+    },
+    countriesPaginated: async (_: any, args: {
+      search?: string,
+      filter?: any,
+      orderBy?: any,
+      args?: any
+    }) => {
+      try {
+        const { buildCountryWhere } = require('../utils/filtering');
+        const { mapCountryOrderField, buildOrderBy } = require('../utils/sorting');
+        const { paginate } = require('../utils/pagination');
+
+        const where = buildCountryWhere(args.filter, args.search);
+        const orderField = args.orderBy?.field || 'NAME';
+        const direction = args.orderBy?.direction || 'ASC';
+        const orderBy = buildOrderBy(mapCountryOrderField(orderField), direction);
+        const pageArgs = args.args || { first: 20 };
+
+        const result = await paginate({
+          model: prisma.country,
+          where,
+          orderBy,
+          first: pageArgs.first,
+          after: pageArgs.after,
+          last: pageArgs.last,
+          before: pageArgs.before,
+        });
+        
+        return {
+          data: Array.isArray(result.items) ? result.items : [],
+          pagination: result.pagination,
+        };
+      } catch (err) {
+        console.error('countriesPaginated error:', err);
+        return { data: [], pagination: { hasNext: false, hasPrevious: false, startCursor: null, endCursor: null, totalCount: 0 } };
+      }
     },
     country: (_: any, args: { id: number }) =>
       prisma.country.findUnique({ where: { id: Number(args.id) } }),
