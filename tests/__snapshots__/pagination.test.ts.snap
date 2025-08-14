@@ -4,20 +4,20 @@ exports[`Pagination API should navigate backward using before cursor for animals
 {
   "data": [
     {
-      "id": "4",
-      "name": "Cheetah",
+      "id": "26",
+      "name": "Catfish",
     },
     {
-      "id": "26",
+      "id": "6",
       "name": "Catfish",
     },
   ],
   "pagination": {
-    "endCursor": "eyJpZCI6MjYsIm9yZGVyRmllbGQiOiJuYW1lIiwib3JkZXJWYWx1ZSI6IkNhdGZpc2giLCJkaXJlY3Rpb24iOiJERVNDIn0=",
+    "endCursor": "eyJpZCI6Niwib3JkZXJGaWVsZCI6Im5hbWUiLCJvcmRlclZhbHVlIjoiQ2F0ZmlzaCIsImRpcmVjdGlvbiI6IkRFU0MifQ==",
     "hasNext": true,
     "hasPrevious": true,
-    "startCursor": "eyJpZCI6NCwib3JkZXJGaWVsZCI6Im5hbWUiLCJvcmRlclZhbHVlIjoiQ2hlZXRhaCIsImRpcmVjdGlvbiI6IkRFU0MifQ==",
-    "totalCount": 30,
+    "startCursor": "eyJpZCI6MjYsIm9yZGVyRmllbGQiOiJuYW1lIiwib3JkZXJWYWx1ZSI6IkNhdGZpc2giLCJkaXJlY3Rpb24iOiJERVNDIn0=",
+    "totalCount": 31,
   },
 }
 `;
@@ -48,20 +48,20 @@ exports[`Pagination API should navigate forward using after cursor for animals 1
 {
   "data": [
     {
+      "id": "10",
+      "name": "Bald Eagle",
+    },
+    {
       "id": "9",
       "name": "Bat",
     },
-    {
-      "id": "3",
-      "name": "Bobcat",
-    },
   ],
   "pagination": {
-    "endCursor": "eyJpZCI6Mywib3JkZXJGaWVsZCI6Im5hbWUiLCJvcmRlclZhbHVlIjoiQm9iY2F0IiwiZGlyZWN0aW9uIjoiQVNDIn0=",
+    "endCursor": "eyJpZCI6OSwib3JkZXJGaWVsZCI6Im5hbWUiLCJvcmRlclZhbHVlIjoiQmF0IiwiZGlyZWN0aW9uIjoiQVNDIn0=",
     "hasNext": true,
     "hasPrevious": true,
-    "startCursor": "eyJpZCI6OSwib3JkZXJGaWVsZCI6Im5hbWUiLCJvcmRlclZhbHVlIjoiQmF0IiwiZGlyZWN0aW9uIjoiQVNDIn0=",
-    "totalCount": 30,
+    "startCursor": "eyJpZCI6MTAsIm9yZGVyRmllbGQiOiJuYW1lIiwib3JkZXJWYWx1ZSI6IkJhbGQgRWFnbGUiLCJkaXJlY3Rpb24iOiJBU0MifQ==",
+    "totalCount": 31,
   },
 }
 `;
@@ -92,20 +92,20 @@ exports[`Pagination API should paginate animals (first page) 1`] = `
 {
   "data": [
     {
+      "id": "1",
+      "name": "African Elephant",
+    },
+    {
       "id": "19",
       "name": "Axolotl",
     },
-    {
-      "id": "10",
-      "name": "Bald Eagle",
-    },
   ],
   "pagination": {
-    "endCursor": "eyJpZCI6MTAsIm9yZGVyRmllbGQiOiJuYW1lIiwib3JkZXJWYWx1ZSI6IkJhbGQgRWFnbGUiLCJkaXJlY3Rpb24iOiJBU0MifQ==",
+    "endCursor": "eyJpZCI6MTksIm9yZGVyRmllbGQiOiJuYW1lIiwib3JkZXJWYWx1ZSI6IkF4b2xvdGwiLCJkaXJlY3Rpb24iOiJBU0MifQ==",
     "hasNext": true,
     "hasPrevious": false,
-    "startCursor": "eyJpZCI6MTksIm9yZGVyRmllbGQiOiJuYW1lIiwib3JkZXJWYWx1ZSI6IkF4b2xvdGwiLCJkaXJlY3Rpb24iOiJBU0MifQ==",
-    "totalCount": 30,
+    "startCursor": "eyJpZCI6MSwib3JkZXJGaWVsZCI6Im5hbWUiLCJvcmRlclZhbHVlIjoiQWZyaWNhbiBFbGVwaGFudCIsImRpcmVjdGlvbiI6IkFTQyJ9",
+    "totalCount": 31,
   },
 }
 `;
