@@ -8,6 +8,11 @@ export const typeDefs = gql`
   scalar Cursor
 
   """
+  ISO8601-formatted date-time string for audit fields.
+  """
+  scalar DateTime
+
+  """
   All continents supported by the API for classification of countries.
   """
   enum Continent {
@@ -42,6 +47,10 @@ export const typeDefs = gql`
     area: Float
     currency: String
     continent: Continent!
+    createdAt: DateTime!
+    modifiedAt: DateTime!
+    createdBy: Int!
+    modifiedBy: Int!
   }
 
   """
@@ -55,6 +64,10 @@ export const typeDefs = gql`
     diet: String
     conservation_status: String
     category: AnimalCategory!
+    createdAt: DateTime!
+    modifiedAt: DateTime!
+    createdBy: Int!
+    modifiedBy: Int!
   }
 
   """

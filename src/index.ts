@@ -1,3 +1,12 @@
+// Extend Express Request type for userId
+import type { Request } from 'express';
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: number;
+    }
+  }
+}
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import express from 'express';
@@ -29,7 +38,7 @@ const loggingPlugin: ApolloServerPlugin = {
 
 
 async function startServer() {
-  const server = new ApolloServer({
+  const server = new ApolloServer<{ userId: number | undefined }>({
     typeDefs,
     resolvers: {
       Query: {
@@ -51,7 +60,7 @@ async function startServer() {
   app.use(bodyParser.json());
 
   // Logging middleware for all /graphql requests
-  app.use('/graphql', (req, res, next) => {
+  app.use('/graphql', (req: Request, res, next) => {
     logger.info('--- Incoming HTTP request to /graphql ---');
     logger.info('Method: ' + req.method);
     logger.info('Path: ' + req.originalUrl);
@@ -62,7 +71,64 @@ async function startServer() {
     next();
   });
 
-  app.use('/graphql', expressMiddleware(server, { context: async () => createContext() }));
+  // Middleware to enforce x-user-id header (GraphQL-friendly errors), except for GET requests to /graphql
+  app.use('/graphql', (req, res, next) => {
+    // Allow unauthenticated GET requests for playground
+    if (req.method === 'GET') {
+      req.userId = undefined;
+      return next();
+    }
+    // Allow unauthenticated introspection POST requests
+    if (req.method === 'POST') {
+      const body = req.body || {};
+      const query = body.query || '';
+      if (
+        typeof query === 'string' &&
+        (query.includes('__schema') || query.includes('__type') || query.includes('IntrospectionQuery'))
+      ) {
+        req.userId = undefined;
+        return next();
+      }
+    }
+    const userIdRaw = req.headers['x-user-id'];
+    if (!userIdRaw) {
+      const err: any = new Error('x-user-id header is required');
+      err.statusCode = 401;
+      err.extensions = { code: 'UNAUTHENTICATED' };
+      return next(err);
+    }
+    const userId = Number(userIdRaw);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      const err: any = new Error('x-user-id header must be a valid user ID number');
+      err.statusCode = 400;
+      err.extensions = { code: 'BAD_USER_INPUT' };
+      return next(err);
+    }
+    req.userId = userId;
+    next();
+  });
+
+  app.use('/graphql', expressMiddleware(server, {
+    context: async ({ req }) => {
+      return { userId: req.userId as number | undefined };
+    }
+  }));
+
+  // Custom error-handling middleware for JSON error responses
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    // If headers already sent, delegate to default Express error handler
+    if (res.headersSent) {
+      return next(err);
+    }
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).json({
+      error: {
+        message: err.message || 'Internal server error',
+        code: err.extensions?.code || 'INTERNAL_SERVER_ERROR',
+        details: err.extensions || undefined,
+      }
+    });
+  });
 
   const port = process.env.PORT || 4000;
   app.listen(port, () => {

@@ -6,71 +6,56 @@ async function main() {
   // Delete all data (order matters for foreign keys, if any)
   await prisma.animal.deleteMany({});
   await prisma.country.deleteMany({});
+  await prisma.user.deleteMany({});
 
   // Reset SQLite auto-increment counters (optional, for clean IDs)
-  await prisma.$executeRawUnsafe('DELETE FROM sqlite_sequence WHERE name = "Animal" OR name = "Country";');
+  await prisma.$executeRawUnsafe('DELETE FROM sqlite_sequence WHERE name = "Animal" OR name = "Country" OR name = "User";');
+
+  // Seed users
+  const now = new Date();
+  const users = [
+    { username: 'alice', email: 'alice@example.com', firstName: 'Alice', lastName: 'Anderson' },
+    { username: 'bob', email: 'bob@example.com', firstName: 'Bob', lastName: 'Brown' }
+  ];
+  const createdUsers: { id: number }[] = [];
+  for (const user of users) {
+    const created = await prisma.user.create({ data: { ...user, createdAt: now, modifiedAt: now } });
+    createdUsers.push(created);
+  }
+  const seedUserId = createdUsers[0].id;
 
   // Seed countries (one for each continent)
-  await prisma.country.create({
-    data: {
-      name: 'Nigeria',
-      capital: 'Abuja',
-      population: 206139589,
-      area: 923768,
-      currency: 'NGN',
-      continent: 'africa',
+  const countrySeed = [
+    {
+      name: 'Nigeria', capital: 'Abuja', population: 206139589, area: 923768, currency: 'NGN', continent: 'africa',
     },
-  });
-  await prisma.country.create({
-    data: {
-      name: 'China',
-      capital: 'Beijing',
-      population: 1402112000,
-      area: 9596961,
-      currency: 'CNY',
-      continent: 'asia',
+    {
+      name: 'China', capital: 'Beijing', population: 1402112000, area: 9596961, currency: 'CNY', continent: 'asia',
     },
-  });
-  await prisma.country.create({
-    data: {
-      name: 'France',
-      capital: 'Paris',
-      population: 67081000,
-      area: 551695,
-      currency: 'EUR',
-      continent: 'europe',
+    {
+      name: 'France', capital: 'Paris', population: 67081000, area: 551695, currency: 'EUR', continent: 'europe',
     },
-  });
-  await prisma.country.create({
-    data: {
-      name: 'United States',
-      capital: 'Washington, D.C.',
-      population: 331893745,
-      area: 9833517,
-      currency: 'USD',
-      continent: 'northamerica',
+    {
+      name: 'United States', capital: 'Washington, D.C.', population: 331893745, area: 9833517, currency: 'USD', continent: 'northamerica',
     },
-  });
-  await prisma.country.create({
-    data: {
-      name: 'Brazil',
-      capital: 'Brasília',
-      population: 212559417,
-      area: 8515767,
-      currency: 'BRL',
-      continent: 'southamerica',
+    {
+      name: 'Brazil', capital: 'Brasília', population: 212559417, area: 8515767, currency: 'BRL', continent: 'southamerica',
     },
-  });
-  await prisma.country.create({
-    data: {
-      name: 'Australia',
-      capital: 'Canberra',
-      population: 25687041,
-      area: 7692024,
-      currency: 'AUD',
-      continent: 'oceania',
+    {
+      name: 'Australia', capital: 'Canberra', population: 25687041, area: 7692024, currency: 'AUD', continent: 'oceania',
     },
-  });
+  ];
+  for (const country of countrySeed) {
+    await prisma.country.create({
+      data: {
+        ...country,
+        createdAt: now,
+        modifiedAt: now,
+        createdBy: seedUserId,
+        modifiedBy: seedUserId,
+      },
+    });
+  }
 
   // Seed animals (many, with diverse and overlapping data for robust search/filter testing)
   const animals = [
@@ -113,7 +98,15 @@ async function main() {
     { name: 'Tiger Moth', species: 'Arctiinae', habitat: 'Forests', diet: 'Herbivore', conservation_status: 'Least Concern', category: 'insects' },
   ];
   for (const animal of animals) {
-    await prisma.animal.create({ data: animal });
+    await prisma.animal.create({
+      data: {
+        ...animal,
+        createdAt: now,
+        modifiedAt: now,
+        createdBy: seedUserId,
+        modifiedBy: seedUserId,
+      },
+    });
   }
 }
 

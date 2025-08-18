@@ -1,11 +1,15 @@
 import { PrismaClient } from '@prisma/client';
+import { buildAnimalWhere } from '../utils/filtering';
+import { mapAnimalOrderField, buildOrderBy } from '../utils/sorting';
+import { paginate } from '../utils/pagination';
 const prisma = new PrismaClient();
 
 export const animalResolvers = {
   Query: {
-    animals: (_: any, args: { search?: string, filter?: any }) => {
-      // Deprecated: Use animalsPaginated
-      const { buildAnimalWhere } = require('../utils/filtering');
+    animals: (_: any, args: { search?: string, filter?: any }, context: { userId?: number }) => {
+      if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
+        throw new Error('x-user-id header is required and must be a valid user ID number');
+      }
       const where = buildAnimalWhere(args.filter, args.search);
       return prisma.animal.findMany({ where });
     },
@@ -14,11 +18,10 @@ export const animalResolvers = {
       filter?: any,
       orderBy?: any,
       args?: any
-    }) => {
-      const { buildAnimalWhere } = require('../utils/filtering');
-      const { mapAnimalOrderField, buildOrderBy } = require('../utils/sorting');
-      const { paginate } = require('../utils/pagination');
-
+    }, context: { userId?: number }) => {
+      if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
+        throw new Error('x-user-id header is required and must be a valid user ID number');
+      }
       const where = buildAnimalWhere(args.filter, args.search);
       const orderField = args.orderBy?.field || 'NAME';
       const direction = args.orderBy?.direction || 'ASC';
@@ -39,11 +42,15 @@ export const animalResolvers = {
         pagination: result.pagination,
       };
     },
-    animal: (_: any, args: { id: number }) =>
-      prisma.animal.findUnique({ where: { id: Number(args.id) } }),
+    animal: (_: any, args: { id: number }, context: { userId: number }) => {
+      if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
+        throw new Error('x-user-id header is required and must be a valid user ID number');
+      }
+      return prisma.animal.findUnique({ where: { id: Number(args.id) } });
+    },
   },
   Mutation: {
-    createAnimal: (
+    createAnimal: async (
       _: any,
       args: {
         name: string;
@@ -52,9 +59,13 @@ export const animalResolvers = {
         diet?: string;
         conservation_status?: string;
         category: string;
+      },
+      context: { userId?: number }
+    ) => {
+      if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
+        throw new Error('x-user-id header is required and must be a valid user ID number');
       }
-    ) =>
-      prisma.animal.create({
+      return await prisma.animal.create({
         data: {
           name: args.name,
           species: args.species,
@@ -62,9 +73,14 @@ export const animalResolvers = {
           diet: args.diet,
           conservation_status: args.conservation_status,
           category: args.category,
+          createdBy: context.userId,
+          modifiedBy: context.userId,
+          createdAt: new Date(),
+          modifiedAt: new Date(),
         },
-      }),
-    updateAnimal: (
+      });
+    },
+    updateAnimal: async (
       _: any,
       args: {
         id: number;
@@ -74,9 +90,13 @@ export const animalResolvers = {
         diet?: string;
         conservation_status?: string;
         category?: string;
+      },
+      context: { userId?: number }
+    ) => {
+      if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
+        throw new Error('x-user-id header is required and must be a valid user ID number');
       }
-    ) =>
-      prisma.animal.update({
+      return await prisma.animal.update({
         where: { id: Number(args.id) },
         data: {
           ...(args.name !== undefined ? { name: args.name } : {}),
@@ -85,9 +105,16 @@ export const animalResolvers = {
           ...(args.diet !== undefined ? { diet: args.diet } : {}),
           ...(args.conservation_status !== undefined ? { conservation_status: args.conservation_status } : {}),
           ...(args.category !== undefined ? { category: args.category } : {}),
+          modifiedBy: context.userId,
+          modifiedAt: new Date(),
         },
-      }),
-    deleteAnimal: (_: any, args: { id: number }) =>
-      prisma.animal.delete({ where: { id: Number(args.id) } }),
+      });
+    },
+    deleteAnimal: (_: any, args: { id: number }, context: { userId: number }) => {
+      if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
+        throw new Error('x-user-id header is required and must be a valid user ID number');
+      }
+      return prisma.animal.delete({ where: { id: Number(args.id) } });
+    },
   },
 };

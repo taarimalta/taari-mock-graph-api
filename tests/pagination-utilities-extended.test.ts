@@ -9,6 +9,11 @@ import { buildOrderBy, mapCountryOrderField, mapAnimalOrderField } from '../src/
 const server = new ApolloServer({
   typeDefs,
   resolvers: [countryResolvers, animalResolvers],
+  context: ({ req }) => {
+    const rawUserId = req?.headers['x-user-id'];
+    const userId = rawUserId ? Number(rawUserId) : undefined;
+    return { userId };
+  },
 });
 
 describe('Additional Pagination and Utility Tests', () => {
@@ -119,41 +124,44 @@ describe('Additional Pagination and Utility Tests', () => {
   
   describe('Pagination Edge Cases', () => {
     it('should handle first: 0 (no results)', async () => {
-      const res = await server.executeOperation({
-        query: `query { 
+      const res = await server.executeOperation(
+        { query: `query { 
           countriesPaginated(args: { first: 1 }) { 
             data { id name } 
             pagination { hasNext hasPrevious totalCount } 
           } 
-        }`,
-      });
+        }` },
+        { req: { headers: { 'x-user-id': '1' } }, res: {} } as any
+      );
       // With first: 1, we should get 1 result, not 0
       expect(res.data?.countriesPaginated.data.length).toBeLessThanOrEqual(1);
       expect(typeof res.data?.countriesPaginated.pagination.hasNext).toBe('boolean');
     });
 
     it('should handle very large first parameter', async () => {
-      const res = await server.executeOperation({
-        query: `query { 
+      const res = await server.executeOperation(
+        { query: `query { 
           countriesPaginated(args: { first: 1000 }) { 
             data { id name } 
             pagination { hasNext hasPrevious totalCount } 
           } 
-        }`,
-      });
+        }` },
+        { req: { headers: { 'x-user-id': '1' } }, res: {} } as any
+      );
       expect(res.data?.countriesPaginated.pagination.hasNext).toBe(false);
       expect(res.data?.countriesPaginated.data.length).toBeLessThanOrEqual(1000);
     });
 
     it('should handle last: 1 (single result)', async () => {
-      const res = await server.executeOperation({
-        query: `query { 
+      const res = await server.executeOperation(
+        { query: `query { 
           animalsPaginated(args: { last: 1 }) { 
             data { id name } 
             pagination { hasNext hasPrevious totalCount } 
           } 
-        }`,
-      });
+        }` },
+        { req: { headers: { 'x-user-id': '1' } }, res: {} } as any
+      );
       expect(res.data?.animalsPaginated.data.length).toBeLessThanOrEqual(1);
       expect(typeof res.data?.animalsPaginated.pagination.hasPrevious).toBe('boolean');
     });
@@ -165,28 +173,30 @@ describe('Additional Pagination and Utility Tests', () => {
   
   describe('Error Handling', () => {
     it('should handle invalid cursor gracefully', async () => {
-      const res = await server.executeOperation({
-        query: `query { 
+      const res = await server.executeOperation(
+        { query: `query { 
           countriesPaginated(args: { first: 2, after: "invalid-cursor" }) { 
             data { id name } 
             pagination { hasNext hasPrevious } 
           } 
-        }`,
-      });
+        }` },
+        { req: { headers: { 'x-user-id': '1' } }, res: {} } as any
+      );
       // Should not crash, should return results (ignoring invalid cursor)
       expect(res.errors).toBeFalsy();
       expect(Array.isArray(res.data?.countriesPaginated.data)).toBe(true);
     });
 
     it('should handle both first and last parameters (should prioritize first)', async () => {
-      const res = await server.executeOperation({
-        query: `query { 
+      const res = await server.executeOperation(
+        { query: `query { 
           countriesPaginated(args: { first: 2, last: 3 }) { 
             data { id name } 
             pagination { hasNext hasPrevious totalCount } 
           } 
-        }`,
-      });
+        }` },
+        { req: { headers: { 'x-user-id': '1' } }, res: {} } as any
+      );
       expect(res.errors).toBeFalsy();
       expect(res.data?.countriesPaginated.data.length).toBeLessThanOrEqual(2); // first takes precedence
     });
@@ -198,8 +208,8 @@ describe('Additional Pagination and Utility Tests', () => {
   
   describe('Complex Queries', () => {
     it('should handle filtering, sorting, and pagination together', async () => {
-      const res = await server.executeOperation({
-        query: `query { 
+      const res = await server.executeOperation(
+        { query: `query { 
           countriesPaginated(
             filter: { populationMin: 1000000 },
             orderBy: { field: POPULATION, direction: DESC },
@@ -208,8 +218,9 @@ describe('Additional Pagination and Utility Tests', () => {
             data { id name population } 
             pagination { hasNext hasPrevious startCursor endCursor totalCount } 
           } 
-        }`,
-      });
+        }` },
+        { req: { headers: { 'x-user-id': '1' } }, res: {} } as any
+      );
       
       expect(res.data?.countriesPaginated.data.length).toBeLessThanOrEqual(2);
       
@@ -330,14 +341,15 @@ describe('Additional Pagination and Utility Tests', () => {
   
   describe('Boundary Cases', () => {
     it('should handle single item pagination', async () => {
-      const res = await server.executeOperation({
-        query: `query { 
+      const res = await server.executeOperation(
+        { query: `query { 
           countriesPaginated(args: { first: 1 }) { 
             data { id name } 
             pagination { hasNext hasPrevious startCursor endCursor } 
           } 
-        }`,
-      });
+        }` },
+        { req: { headers: { 'x-user-id': '1' } }, res: {} } as any
+      );
       
       expect(res.data?.countriesPaginated.data.length).toBe(1);
       expect(res.data?.countriesPaginated.pagination.startCursor).toBe(
@@ -347,25 +359,27 @@ describe('Additional Pagination and Utility Tests', () => {
 
     it('should handle pagination when result count equals page size', async () => {
       // First, get total count
-      const totalRes = await server.executeOperation({
-        query: `query { 
+      const totalRes = await server.executeOperation(
+        { query: `query { 
           countriesPaginated(args: { first: 1000 }) { 
             pagination { totalCount } 
           } 
-        }`,
-      });
+        }` },
+        { req: { headers: { 'x-user-id': '1' } }, res: {} } as any
+      );
       
       const totalCount = totalRes.data?.countriesPaginated.pagination.totalCount;
       
       // Now paginate with exactly that many items
-      const res = await server.executeOperation({
-        query: `query { 
+      const res = await server.executeOperation(
+        { query: `query { 
           countriesPaginated(args: { first: ${totalCount} }) { 
             data { id } 
             pagination { hasNext hasPrevious } 
           } 
-        }`,
-      });
+        }` },
+        { req: { headers: { 'x-user-id': '1' } }, res: {} } as any
+      );
       
       expect(res.data?.countriesPaginated.data.length).toBe(totalCount);
       expect(res.data?.countriesPaginated.pagination.hasNext).toBe(false);
@@ -380,14 +394,15 @@ describe('Additional Pagination and Utility Tests', () => {
     it('should handle large page sizes efficiently', async () => {
       const start = Date.now();
       
-      const res = await server.executeOperation({
-        query: `query { 
+      const res = await server.executeOperation(
+        { query: `query { 
           countriesPaginated(args: { first: 100 }) { 
             data { id name population } 
             pagination { hasNext totalCount } 
           } 
-        }`,
-      });
+        }` },
+        { req: { headers: { 'x-user-id': '1' } }, res: {} } as any
+      );
       
       const duration = Date.now() - start;
       
@@ -398,8 +413,8 @@ describe('Additional Pagination and Utility Tests', () => {
     it('should handle complex filters efficiently', async () => {
       const start = Date.now();
       
-      const res = await server.executeOperation({
-        query: `query { 
+      const res = await server.executeOperation(
+        { query: `query { 
           countriesPaginated(
             filter: { 
               populationMin: 1000000, 
@@ -412,8 +427,9 @@ describe('Additional Pagination and Utility Tests', () => {
             data { id name population continent } 
             pagination { hasNext totalCount } 
           } 
-        }`,
-      });
+        }` },
+        { req: { headers: { 'x-user-id': '1' } }, res: {} } as any
+      );
       
       const duration = Date.now() - start;
       

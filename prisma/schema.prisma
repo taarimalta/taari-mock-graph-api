@@ -7,6 +7,20 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model User {
+  id        Int    @id @default(autoincrement())
+  username  String @unique
+  email     String @unique
+  firstName String?
+  lastName  String?
+  createdAt DateTime @default(now())
+  modifiedAt DateTime @default(now())
+  countriesCreated Country[] @relation("CountryCreatedBy")
+  countriesModified Country[] @relation("CountryModifiedBy")
+  animalsCreated Animal[] @relation("AnimalCreatedBy")
+  animalsModified Animal[] @relation("AnimalModifiedBy")
+}
+
 model Country {
   id        Int    @id @default(autoincrement())
   name      String
@@ -15,6 +29,12 @@ model Country {
   area      Float?
   currency  String?
   continent String
+  createdAt DateTime @default(now())
+  modifiedAt DateTime?
+  createdBy Int?
+  modifiedBy Int?
+  creator   User?   @relation("CountryCreatedBy", fields: [createdBy], references: [id])
+  modifier  User?   @relation("CountryModifiedBy", fields: [modifiedBy], references: [id])
 }
 
 model Animal {
@@ -25,4 +45,10 @@ model Animal {
   diet                String?
   conservation_status String?
   category            String
+  createdAt DateTime @default(now())
+  modifiedAt DateTime?
+  createdBy Int?
+  modifiedBy Int?
+  creator   User?   @relation("AnimalCreatedBy", fields: [createdBy], references: [id])
+  modifier  User?   @relation("AnimalModifiedBy", fields: [modifiedBy], references: [id])
 }
