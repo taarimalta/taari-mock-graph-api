@@ -14,6 +14,7 @@ import cors from 'cors';
 import { typeDefs } from './schema/typeDefs';
 import { countryResolvers } from './resolvers/country';
 import { animalResolvers } from './resolvers/animal';
+import { userResolvers } from './resolvers/user';
 import logger from './logger';
 import { createContext } from './context';
 
@@ -43,6 +44,7 @@ async function startServer() {
       Query: {
         ...countryResolvers.Query,
         ...animalResolvers.Query,
+        ...userResolvers.Query,
       },
       Mutation: {
         ...countryResolvers.Mutation,

@@ -69,6 +69,19 @@ export const typeDefs = `
   }
 
   """
+  User information for authenticated actors of the system.
+  """
+  type User {
+    id: ID!
+    username: String!
+    email: String!
+    firstName: String
+    lastName: String
+    createdAt: DateTime!
+    modifiedAt: DateTime!
+  }
+
+  """
   Pagination metadata returned with any paginated list.
   Indicates whether more data exists and provides cursors for navigation.
   """
@@ -185,6 +198,41 @@ export const typeDefs = `
     pagination: Pagination!
   }
 
+  """
+  Paginated list of users.
+  """
+  type UserPage {
+    data: [User!]!
+    pagination: Pagination!
+  }
+
+  input UserFilter {
+    username: String
+    email: String
+    firstName: String
+    lastName: String
+  }
+
+  input UserOrder {
+    field: String! = "username"
+    direction: SortDirection! = ASC
+  }
+
+  input CreateUserInput {
+    username: String!
+    email: String!
+    firstName: String
+    lastName: String
+  }
+
+  input UpdateUserInput {
+    id: ID!
+    username: String
+    email: String
+    firstName: String
+    lastName: String
+  }
+
   type Query {
     """
     Returns a paginated list of countries with optional search, filtering, and ordering.
@@ -207,15 +255,20 @@ export const typeDefs = `
     ): AnimalPage!
 
     """
+    Returns a paginated list of users.
+    """
+    usersPaginated(
+      search: String,
+      filter: UserFilter,
+      orderBy: UserOrder = { field: "username", direction: ASC },
+      args: PageArgs = { first: 20 }
+    ): UserPage!
+
+    """
     Returns all countries matching optional search and filters.
     Deprecated in favor of countriesPaginated for performance and scalability.
     """
     countries(search: String, filter: CountryFilter): [Country!]! @deprecated(reason: "Use countriesPaginated")
-
-    """
-    Returns a single country by its unique ID.
-    """
-    country(id: ID!): Country
 
     """
     Returns all animals matching optional search and filters.
@@ -224,9 +277,19 @@ export const typeDefs = `
     animals(search: String, filter: AnimalFilter): [Animal!]! @deprecated(reason: "Use animalsPaginated")
 
     """
+    Returns a single country by its unique ID.
+    """
+    country(id: ID!): Country
+
+    """
     Returns a single animal by its unique ID.
     """
     animal(id: ID!): Animal
+
+    """
+    Returns a single user by its unique ID.
+    """
+    user(id: ID!): User
   }
 
   type Mutation {
@@ -289,5 +352,20 @@ export const typeDefs = `
     Deletes an animal by its unique ID.
     """
     deleteAnimal(id: ID!): Animal
+
+    """
+    Creates a new user.
+    """
+    createUser(input: CreateUserInput!): User!
+
+    """
+    Updates an existing user.
+    """
+    updateUser(input: UpdateUserInput!): User
+
+    """
+    Deletes a user by ID.
+    """
+    deleteUser(id: ID!): User
   }
 `;
