@@ -8,10 +8,9 @@ declare global {
   }
 }
 import { ApolloServer } from '@apollo/server';
-import { expressMiddleware } from '@apollo/server/express4';
+import { expressMiddleware } from '@as-integrations/express4';
 import express from 'express';
 import cors from 'cors';
-import bodyParser from 'body-parser';
 import { typeDefs } from './schema/typeDefs';
 import { countryResolvers } from './resolvers/country';
 import { animalResolvers } from './resolvers/animal';
@@ -57,7 +56,7 @@ async function startServer() {
 
   const app = express();
   app.use(cors());
-  app.use(bodyParser.json());
+  app.use(express.json());
 
   // Logging middleware for all /graphql requests
   app.use('/graphql', (req: Request, res, next) => {
@@ -109,7 +108,7 @@ async function startServer() {
   });
 
   app.use('/graphql', expressMiddleware(server, {
-    context: async ({ req }) => {
+    context: async ({ req }: { req: Request }) => {
       return { userId: req.userId as number | undefined };
     }
   }));

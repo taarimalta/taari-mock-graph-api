@@ -1,20 +1,31 @@
-import { ApolloServer } from 'apollo-server';
+import { ApolloServer } from '@apollo/server';
+import { createContext } from '../src/context';
 import { typeDefs } from '../src/schema/typeDefs';
 import { countryResolvers } from '../src/resolvers/country';
 import { animalResolvers } from '../src/resolvers/animal';
 import { encodeCursor, decodeCursor, isValidCursor } from '../src/utils/pagination';
 import { buildCountryWhere, buildAnimalWhere } from '../src/utils/filtering';
-import { buildOrderBy, mapCountryOrderField, mapAnimalOrderField } from '../src/utils/sorting';
+import { mapCountryOrderField, mapAnimalOrderField, buildOrderBy } from '../src/utils/sorting';
 
-const server = new ApolloServer({
+const server: any = new ApolloServer({
   typeDefs,
   resolvers: [countryResolvers, animalResolvers],
-  context: ({ req }) => {
-    const rawUserId = req?.headers['x-user-id'];
-    const userId = rawUserId ? Number(rawUserId) : undefined;
-    return { userId };
-  },
 });
+
+// Helper to normalize executeOperation return type to match older apollo-server shape in tests
+const exec = async (op: any, ctx?: any) => {
+  if (ctx?.req?.headers) {
+    const contextValue = createContext(ctx.req.headers);
+    const res = await server.executeOperation(op, { contextValue });
+    const anyRes: any = res as any;
+    if (anyRes?.body?.kind === 'single') return anyRes.body.singleResult;
+    return anyRes as any;
+  }
+  const res = await server.executeOperation(op, ctx);
+  const anyRes: any = res as any;
+  if (anyRes?.body?.kind === 'single') return anyRes.body.singleResult;
+  return anyRes as any;
+};
 
 describe('Additional Pagination and Utility Tests', () => {
   
@@ -124,7 +135,7 @@ describe('Additional Pagination and Utility Tests', () => {
   
   describe('Pagination Edge Cases', () => {
     it('should handle first: 0 (no results)', async () => {
-      const res = await server.executeOperation(
+      const res = await exec(
         { query: `query { 
           countriesPaginated(args: { first: 1 }) { 
             data { id name } 
@@ -139,7 +150,7 @@ describe('Additional Pagination and Utility Tests', () => {
     });
 
     it('should handle very large first parameter', async () => {
-      const res = await server.executeOperation(
+      const res = await exec(
         { query: `query { 
           countriesPaginated(args: { first: 1000 }) { 
             data { id name } 
@@ -153,7 +164,7 @@ describe('Additional Pagination and Utility Tests', () => {
     });
 
     it('should handle last: 1 (single result)', async () => {
-      const res = await server.executeOperation(
+      const res = await exec(
         { query: `query { 
           animalsPaginated(args: { last: 1 }) { 
             data { id name } 
@@ -173,7 +184,7 @@ describe('Additional Pagination and Utility Tests', () => {
   
   describe('Error Handling', () => {
     it('should handle invalid cursor gracefully', async () => {
-      const res = await server.executeOperation(
+      const res = await exec(
         { query: `query { 
           countriesPaginated(args: { first: 2, after: "invalid-cursor" }) { 
             data { id name } 
@@ -188,7 +199,7 @@ describe('Additional Pagination and Utility Tests', () => {
     });
 
     it('should handle both first and last parameters (should prioritize first)', async () => {
-      const res = await server.executeOperation(
+      const res = await exec(
         { query: `query { 
           countriesPaginated(args: { first: 2, last: 3 }) { 
             data { id name } 
@@ -208,7 +219,7 @@ describe('Additional Pagination and Utility Tests', () => {
   
   describe('Complex Queries', () => {
     it('should handle filtering, sorting, and pagination together', async () => {
-      const res = await server.executeOperation(
+      const res = await exec(
         { query: `query { 
           countriesPaginated(
             filter: { populationMin: 1000000 },
@@ -235,7 +246,7 @@ describe('Additional Pagination and Utility Tests', () => {
 
     it('should maintain sort order across pages', async () => {
       // Get first page
-      const firstRes = await server.executeOperation({
+      const firstRes = await exec({
         query: `query { 
           animalsPaginated(
             orderBy: { field: NAME, direction: ASC },
@@ -251,7 +262,7 @@ describe('Additional Pagination and Utility Tests', () => {
       const cursor = firstRes.data?.animalsPaginated.pagination.endCursor;
       
       // Get second page
-      const secondRes = await server.executeOperation({
+      const secondRes = await exec({
         query: `query { 
           animalsPaginated(
             orderBy: { field: NAME, direction: ASC },
@@ -279,7 +290,7 @@ describe('Additional Pagination and Utility Tests', () => {
   describe('TotalCount Accuracy', () => {
     it('should return correct totalCount with filters', async () => {
       // Test filtered totalCount
-      const filteredRes = await server.executeOperation({
+      const filteredRes = await exec({
         query: `query { 
           countriesPaginated(
             filter: { continent: europe },
@@ -292,7 +303,7 @@ describe('Additional Pagination and Utility Tests', () => {
       });
       
       // Test unfiltered totalCount  
-      const unfilteredRes = await server.executeOperation({
+      const unfilteredRes = await exec({
         query: `query { 
           countriesPaginated(args: { first: 1000 }) { 
             data { id } 
@@ -310,7 +321,7 @@ describe('Additional Pagination and Utility Tests', () => {
 
     it('should maintain consistent totalCount across pages', async () => {
       // Get first page
-      const firstRes = await server.executeOperation({
+      const firstRes = await exec({
         query: `query { 
           countriesPaginated(args: { first: 2 }) { 
             pagination { totalCount endCursor } 
@@ -322,7 +333,7 @@ describe('Additional Pagination and Utility Tests', () => {
       const firstTotal = firstRes.data?.countriesPaginated.pagination.totalCount;
       
       // Get second page
-      const secondRes = await server.executeOperation({
+      const secondRes = await exec({
         query: `query { 
           countriesPaginated(args: { first: 2, after: "${cursor}" }) { 
             pagination { totalCount } 
@@ -341,7 +352,7 @@ describe('Additional Pagination and Utility Tests', () => {
   
   describe('Boundary Cases', () => {
     it('should handle single item pagination', async () => {
-      const res = await server.executeOperation(
+      const res = await exec(
         { query: `query { 
           countriesPaginated(args: { first: 1 }) { 
             data { id name } 
@@ -359,7 +370,7 @@ describe('Additional Pagination and Utility Tests', () => {
 
     it('should handle pagination when result count equals page size', async () => {
       // First, get total count
-      const totalRes = await server.executeOperation(
+      const totalRes = await exec(
         { query: `query { 
           countriesPaginated(args: { first: 1000 }) { 
             pagination { totalCount } 
@@ -371,7 +382,7 @@ describe('Additional Pagination and Utility Tests', () => {
       const totalCount = totalRes.data?.countriesPaginated.pagination.totalCount;
       
       // Now paginate with exactly that many items
-      const res = await server.executeOperation(
+      const res = await exec(
         { query: `query { 
           countriesPaginated(args: { first: ${totalCount} }) { 
             data { id } 
@@ -394,7 +405,7 @@ describe('Additional Pagination and Utility Tests', () => {
     it('should handle large page sizes efficiently', async () => {
       const start = Date.now();
       
-      const res = await server.executeOperation(
+      const res = await exec(
         { query: `query { 
           countriesPaginated(args: { first: 100 }) { 
             data { id name population } 
@@ -413,7 +424,7 @@ describe('Additional Pagination and Utility Tests', () => {
     it('should handle complex filters efficiently', async () => {
       const start = Date.now();
       
-      const res = await server.executeOperation(
+      const res = await exec(
         { query: `query { 
           countriesPaginated(
             filter: { 

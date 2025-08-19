@@ -1,6 +1,4 @@
-import { gql } from 'graphql-tag';
-
-export const typeDefs = gql`
+export const typeDefs = `
   """
   Opaque cursor token (base64-encoded payload from the last item on a page).
   Clients must treat this as an unreadable token.
