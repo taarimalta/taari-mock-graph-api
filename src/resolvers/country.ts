@@ -6,14 +6,6 @@ const prisma = new PrismaClient();
 
 export const countryResolvers = {
   Query: {
-    countries: (_: any, args: { search?: string, filter?: any }, context: any) => {
-      const userId = context.userId;
-      if (typeof userId !== 'number' || !Number.isFinite(userId) || userId <= 0) {
-        throw new Error('x-user-id header is required and must be a valid user ID number');
-      }
-      const where = buildCountryWhere(args.filter, args.search);
-      return prisma.country.findMany({ where });
-    },
     countriesPaginated: async (_: any, args: {
       search?: string,
       filter?: any,

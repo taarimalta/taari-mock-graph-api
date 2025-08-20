@@ -35,16 +35,16 @@ describe('Audit Fields Enforcement', () => {
       expect(res.errors).toBeDefined();
       expect(res.errors?.[0].message).toMatch(/x-user-id header must be a valid user ID number/);
     });
-    it('should throw error if x-user-id header is missing for countries query', async () => {
+    it('should throw error if x-user-id header is missing for countries (paginated) query', async () => {
       const res = await exec({
-        query: `query { countries { id name } }`,
+        query: `query { countriesPaginated(args: { first: 1 }) { data { id name } } }`,
       });
       expect(res.errors).toBeDefined();
       expect(res.errors?.[0].message).toMatch(/x-user-id header is required and must be a valid user ID number/);
     });
-    it('should throw error if x-user-id header is not a valid number for countries query', async () => {
+    it('should throw error if x-user-id header is not a valid number for countries (paginated) query', async () => {
       const res = await exec(
-        { query: `query { countries { id name } }` },
+        { query: `query { countriesPaginated(args: { first: 1 }) { data { id name } } }` },
         { req: { headers: { 'x-user-id': 'notanumber' } }, res: {} } as any
       );
       expect(res.errors).toBeDefined();

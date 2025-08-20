@@ -34,16 +34,16 @@ describe('Animal mutation header enforcement', () => {
     expect(res.errors?.[0].message).toMatch(/x-user-id header is required and must be a valid user ID number/);
   });
   describe('Animal query and delete header enforcement', () => {
-    it('should throw error if x-user-id header is missing for animals query', async () => {
+    it('should throw error if x-user-id header is missing for animals (paginated) query', async () => {
       const res = await exec({
-        query: `query { animals { id name } }`,
+        query: `query { animalsPaginated(args: { first: 1 }) { data { id name } } }`,
       });
       expect(res.errors).toBeDefined();
       expect(res.errors?.[0].message).toMatch(/x-user-id header is required and must be a valid user ID number/);
     });
-    it('should throw error if x-user-id header is not a valid number for animals query', async () => {
+    it('should throw error if x-user-id header is not a valid number for animals (paginated) query', async () => {
       const res = await exec(
-        { query: `query { animals { id name } }` },
+        { query: `query { animalsPaginated(args: { first: 1 }) { data { id name } } }` },
         { req: { headers: { 'x-user-id': 'notanumber' } }, res: {} } as any
       );
       expect(res.errors).toBeDefined();

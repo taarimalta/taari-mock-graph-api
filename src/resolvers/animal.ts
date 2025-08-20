@@ -6,13 +6,6 @@ const prisma = new PrismaClient();
 
 export const animalResolvers = {
   Query: {
-    animals: (_: any, args: { search?: string, filter?: any }, context: { userId?: number }) => {
-      if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
-        throw new Error('x-user-id header is required and must be a valid user ID number');
-      }
-      const where = buildAnimalWhere(args.filter, args.search);
-      return prisma.animal.findMany({ where });
-    },
     animalsPaginated: async (_: any, args: {
       search?: string,
       filter?: any,

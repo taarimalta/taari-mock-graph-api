@@ -456,10 +456,7 @@ export const typeDefs = `
       args: PageArgs = { first: 20 }
     ): CountryPage!
 
-    """
-    Returns a non-paginated list of countries (deprecated).
-    """
-    countries(search: String, filter: CountryFilter): [Country!]! @deprecated(reason: "Use countriesPaginated instead")
+  
 
     """
     Returns a single country by its unique ID.
@@ -477,10 +474,7 @@ export const typeDefs = `
       args: PageArgs = { first: 20 }
     ): AnimalPage!
 
-    """
-    Returns a non-paginated list of animals (deprecated).
-    """
-    animals(search: String, filter: AnimalFilter): [Animal!]! @deprecated(reason: "Use animalsPaginated instead")
+  
 
     """
     Returns a single animal by its unique ID.
@@ -498,10 +492,7 @@ export const typeDefs = `
       args: PageArgs = { first: 20 }
     ): DomainPage!
 
-    """
-    Returns a non-paginated list of domains (deprecated).
-    """
-    domains(search: String, filter: DomainFilter): [Domain!]! @deprecated(reason: "Use domainsPaginated instead")
+  
 
     """
     Returns a single domain by its unique ID.
