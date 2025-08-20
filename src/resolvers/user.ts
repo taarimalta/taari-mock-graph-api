@@ -33,10 +33,11 @@ export const userResolvers = {
         model: prisma.user,
         where,
         orderBy,
-        first: pageArgs.first,
-        after: pageArgs.after,
-        last: pageArgs.last,
-        before: pageArgs.before,
+  first: pageArgs.first,
+  after: pageArgs.after,
+  last: pageArgs.last,
+  before: pageArgs.before,
+  include: { creator: true, modifier: true },
       });
 
       return {
@@ -115,6 +116,19 @@ export const userResolvers = {
       const existing = await prisma.user.findUnique({ where: { id } });
       if (!existing) return null;
       return prisma.user.delete({ where: { id } });
+    },
+  },
+  // Field resolvers for User audit relations
+  User: {
+    createdBy: async (user: any) => {
+      if (user.creator) return user.creator;
+      if (!user.createdBy) return null;
+      return prisma.user.findUnique({ where: { id: user.createdBy } });
+    },
+    modifiedBy: async (user: any) => {
+      if (user.modifier) return user.modifier;
+      if (!user.modifiedBy) return null;
+      return prisma.user.findUnique({ where: { id: user.modifiedBy } });
     },
   },
 };

@@ -45,10 +45,10 @@ export const typeDefs = `
     area: Float
     currency: String
     continent: Continent!
-    createdAt: DateTime!
-    modifiedAt: DateTime!
-  createdBy: Int
-  modifiedBy: Int
+  createdAt: DateTime!
+  modifiedAt: DateTime!
+  createdBy: User
+  modifiedBy: User
   }
 
   """
@@ -62,10 +62,10 @@ export const typeDefs = `
     diet: String
     conservation_status: String
     category: AnimalCategory!
-    createdAt: DateTime!
-    modifiedAt: DateTime!
-    createdBy: Int!
-    modifiedBy: Int!
+  createdAt: DateTime!
+  modifiedAt: DateTime!
+  createdBy: User
+  modifiedBy: User
   }
 
   """
@@ -77,10 +77,10 @@ export const typeDefs = `
     email: String!
     firstName: String
     lastName: String
-    createdAt: DateTime!
-    modifiedAt: DateTime!
-  createdBy: Int!
-  modifiedBy: Int!
+  createdAt: DateTime!
+  modifiedAt: DateTime!
+  createdBy: User
+  modifiedBy: User
   }
 
 
@@ -404,10 +404,10 @@ export const typeDefs = `
       id: ID!
       name: String!
       parent: Domain
-      createdAt: DateTime!
-      modifiedAt: DateTime!
-      createdBy: Int!
-      modifiedBy: Int!
+  createdAt: DateTime!
+  modifiedAt: DateTime!
+  createdBy: User
+  modifiedBy: User
     }
 
     extend type Query {

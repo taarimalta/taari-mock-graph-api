@@ -39,7 +39,7 @@ describe('Domain GraphQL API', () => {
             createDomain(name: $name) {
               id
               name
-              createdBy
+              createdBy { id }
             }
           }
         `,
@@ -51,9 +51,9 @@ describe('Domain GraphQL API', () => {
   if (res.body.kind !== 'single') throw new Error('Expected single result');
   const { data, errors } = res.body.singleResult;
   expect(errors).toBeUndefined();
-  const domainData = data as { createDomain: { id: string, name: string, createdBy: number } };
+  const domainData = data as { createDomain: { id: string, name: string, createdBy: { id: string } } };
   expect(domainData.createDomain.name).toBe('Test Domain');
-  expect(domainData.createDomain.createdBy).toBe(userId);
+  expect(domainData.createDomain.createdBy.id).toBe(String(userId));
   createdDomainId = Number(domainData.createDomain.id);
   });
 
@@ -65,7 +65,7 @@ describe('Domain GraphQL API', () => {
             domain(id: $id) {
               id
               name
-              createdBy
+              createdBy { id }
             }
           }
         `,
@@ -77,10 +77,10 @@ describe('Domain GraphQL API', () => {
   if (res.body.kind !== 'single') throw new Error('Expected single result');
   const { data, errors } = res.body.singleResult;
   expect(errors).toBeUndefined();
-  const domainData = data as { domain: { id: string, name: string, createdBy: number } };
+  const domainData = data as { domain: { id: string, name: string, createdBy: { id: string } } };
   expect(domainData.domain.id).toBe(String(createdDomainId));
   expect(domainData.domain.name).toBe('Test Domain');
-  expect(domainData.domain.createdBy).toBe(userId);
+  expect(domainData.domain.createdBy.id).toBe(String(userId));
   });
 
   it('updates a domain', async () => {

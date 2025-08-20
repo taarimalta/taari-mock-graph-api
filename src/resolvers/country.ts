@@ -34,10 +34,11 @@ export const countryResolvers = {
         model: prisma.country,
         where,
         orderBy,
-        first: pageArgs.first,
-        after: pageArgs.after,
-        last: pageArgs.last,
-        before: pageArgs.before,
+  first: pageArgs.first,
+  after: pageArgs.after,
+  last: pageArgs.last,
+  before: pageArgs.before,
+  include: { creator: true, modifier: true },
       });
 
       return {
@@ -122,6 +123,19 @@ export const countryResolvers = {
         throw new Error('x-user-id header must be a valid user ID number');
       }
       return prisma.country.delete({ where: { id: Number(args.id) } });
+    },
+  },
+  // Field resolvers to return full User objects for audit fields
+  Country: {
+    createdBy: async (country: any) => {
+      if (country.creator) return country.creator;
+      if (!country.createdBy) return null;
+      return prisma.user.findUnique({ where: { id: country.createdBy } });
+    },
+    modifiedBy: async (country: any) => {
+      if (country.modifier) return country.modifier;
+      if (!country.modifiedBy) return null;
+      return prisma.user.findUnique({ where: { id: country.modifiedBy } });
     },
   },
 };

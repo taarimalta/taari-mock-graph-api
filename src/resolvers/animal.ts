@@ -32,10 +32,11 @@ export const animalResolvers = {
         model: prisma.animal,
         where,
         orderBy,
-        first: pageArgs.first,
-        after: pageArgs.after,
-        last: pageArgs.last,
-        before: pageArgs.before,
+  first: pageArgs.first,
+  after: pageArgs.after,
+  last: pageArgs.last,
+  before: pageArgs.before,
+  include: { creator: true, modifier: true },
       });
       return {
         data: Array.isArray(result.items) ? result.items : [],
@@ -115,6 +116,19 @@ export const animalResolvers = {
         throw new Error('x-user-id header is required and must be a valid user ID number');
       }
       return prisma.animal.delete({ where: { id: Number(args.id) } });
+    },
+  },
+  // Field resolvers for audit relations
+  Animal: {
+    createdBy: async (animal: any) => {
+      if (animal.creator) return animal.creator;
+      if (!animal.createdBy) return null;
+      return prisma.user.findUnique({ where: { id: animal.createdBy } });
+    },
+    modifiedBy: async (animal: any) => {
+      if (animal.modifier) return animal.modifier;
+      if (!animal.modifiedBy) return null;
+      return prisma.user.findUnique({ where: { id: animal.modifiedBy } });
     },
   },
 };

@@ -79,6 +79,7 @@ export async function paginate({
   after,
   last,
   before,
+  include,
 }: {
   model: any;
   where: any;
@@ -87,6 +88,7 @@ export async function paginate({
   after?: string;
   last?: number;
   before?: string;
+  include?: any;
 }) {
   // Determine pagination direction and cursor
   let cursorData: CursorData | null = null;
@@ -105,13 +107,16 @@ export async function paginate({
   }
 
   // Fetch items
-  let items = await model.findMany({
+  const findArgs: any = {
     where,
     orderBy,
     cursor,
     skip: cursor ? 1 : 0,
     take: take + 1,
-  });
+  };
+  if (include) findArgs.include = include;
+
+  let items = await model.findMany(findArgs);
 
   let hasNext = false;
   let hasPrevious = false;
