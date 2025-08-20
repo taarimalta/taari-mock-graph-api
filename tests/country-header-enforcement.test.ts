@@ -30,7 +30,7 @@ describe('Audit Fields Enforcement', () => {
   describe('Country audit field header enforcement', () => {
     it('should throw error if x-user-id header is missing for createCountry', async () => {
       const res = await exec({
-        query: `mutation { createCountry(name: "Testland", continent: africa) { id } }`,
+        query: `mutation { createCountry(input: { name: "Testland", continent: africa }) { id } }`,
       });
       expect(res.errors).toBeDefined();
       expect(res.errors?.[0].message).toMatch(/x-user-id header must be a valid user ID number/);

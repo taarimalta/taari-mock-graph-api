@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { isValidEmail, isNonEmptyString } from '../utils/validation';
 import { paginate } from '../utils/pagination';
+import { mapUserOrderField, buildOrderBy } from '../utils/sorting';
 const prisma = new PrismaClient();
 
 export const userResolvers = {
@@ -24,9 +25,10 @@ export const userResolvers = {
         if (args.filter.firstName) where.firstName = { contains: args.filter.firstName, mode: 'insensitive' };
         if (args.filter.lastName) where.lastName = { contains: args.filter.lastName, mode: 'insensitive' };
       }
-      const orderField = args.orderBy?.field || 'username';
-      const direction = args.orderBy?.direction || 'ASC';
-      const orderBy = [ { [orderField]: direction.toLowerCase() }, { id: direction.toLowerCase() } ];
+  const orderFieldToken = args.orderBy?.field || 'USERNAME';
+  const direction = args.orderBy?.direction || 'ASC';
+  const orderField = mapUserOrderField(orderFieldToken);
+  const orderBy = buildOrderBy(orderField, direction as any);
       const pageArgs = args.args || { first: 20 };
 
       const result = await paginate({
@@ -71,7 +73,7 @@ export const userResolvers = {
       }
       return prisma.user.create({ data: createData });
     },
-    updateUser: async (_: any, args: { input: any }, context: { userId?: number }) => {
+  updateUser: async (_: any, args: { input: any }, context: { userId?: number }) => {
       if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
         throw new Error('x-user-id header is required and must be a valid user ID number');
       }
@@ -108,7 +110,7 @@ export const userResolvers = {
         throw e;
       }
     },
-    deleteUser: async (_: any, args: { id: number }, context: { userId?: number }) => {
+  deleteUser: async (_: any, args: { id: number }, context: { userId?: number }) => {
       if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
         throw new Error('x-user-id header is required and must be a valid user ID number');
       }

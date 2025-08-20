@@ -13,7 +13,7 @@ fi
 
 # Query all countries and extract IDs
 COUNTRIES_JSON=$(curl -s -X POST -H "Content-Type: application/json" --data '{
-  "query": "{ countries { id name continent capital population area currency } }"
+  "query": "{ countriesPaginated(args: { first: 1000 }) { data { id name continent capital population area currency } } }"
 }' $API_URL)
 echo "All countries:"
 echo "$COUNTRIES_JSON" | jq .

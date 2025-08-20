@@ -51,29 +51,19 @@ export const animalResolvers = {
     },
   },
   Mutation: {
-    createAnimal: async (
-      _: any,
-      args: {
-        name: string;
-        species?: string;
-        habitat?: string;
-        diet?: string;
-        conservation_status?: string;
-        category: string;
-      },
-      context: { userId?: number }
-    ) => {
+    createAnimal: async (_: any, args: { input: any }, context: { userId?: number }) => {
       if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
         throw new Error('x-user-id header is required and must be a valid user ID number');
       }
+      const input = args.input || {};
       return await prisma.animal.create({
         data: {
-          name: args.name,
-          species: args.species,
-          habitat: args.habitat,
-          diet: args.diet,
-          conservation_status: args.conservation_status,
-          category: args.category,
+          name: input.name,
+          species: input.species,
+          habitat: input.habitat,
+          diet: input.diet,
+          conservation_status: input.conservation_status,
+          category: input.category,
           createdBy: context.userId,
           modifiedBy: context.userId,
           createdAt: new Date(),
@@ -81,31 +71,20 @@ export const animalResolvers = {
         },
       });
     },
-    updateAnimal: async (
-      _: any,
-      args: {
-        id: number;
-        name?: string;
-        species?: string;
-        habitat?: string;
-        diet?: string;
-        conservation_status?: string;
-        category?: string;
-      },
-      context: { userId?: number }
-    ) => {
+    updateAnimal: async (_: any, args: { input: any }, context: { userId?: number }) => {
       if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
         throw new Error('x-user-id header is required and must be a valid user ID number');
       }
+      const input = args.input || {};
       return await prisma.animal.update({
-        where: { id: Number(args.id) },
+        where: { id: Number(input.id) },
         data: {
-          ...(args.name !== undefined ? { name: args.name } : {}),
-          ...(args.species !== undefined ? { species: args.species } : {}),
-          ...(args.habitat !== undefined ? { habitat: args.habitat } : {}),
-          ...(args.diet !== undefined ? { diet: args.diet } : {}),
-          ...(args.conservation_status !== undefined ? { conservation_status: args.conservation_status } : {}),
-          ...(args.category !== undefined ? { category: args.category } : {}),
+          ...(input.name !== undefined ? { name: input.name } : {}),
+          ...(input.species !== undefined ? { species: input.species } : {}),
+          ...(input.habitat !== undefined ? { habitat: input.habitat } : {}),
+          ...(input.diet !== undefined ? { diet: input.diet } : {}),
+          ...(input.conservation_status !== undefined ? { conservation_status: input.conservation_status } : {}),
+          ...(input.category !== undefined ? { category: input.category } : {}),
           modifiedBy: context.userId,
           modifiedAt: new Date(),
         },

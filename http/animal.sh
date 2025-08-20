@@ -12,7 +12,7 @@ fi
 
 # Query all animals and extract IDs
 ANIMALS_JSON=$(curl -s -X POST -H "Content-Type: application/json" --data '{
-  "query": "{ animals { id name category species habitat diet conservation_status } }"
+  "query": "{ animalsPaginated(args: { first: 1000 }) { data { id name category species habitat diet conservation_status } } }"
 }' $API_URL)
 echo "All animals:"
 echo "$ANIMALS_JSON" | jq .
@@ -20,7 +20,7 @@ echo "$ANIMALS_JSON" | jq .
 # Extract IDs for each category
 declare -A CATEGORY_IDS
 for CATEGORY in mammals birds reptiles amphibians fish insects; do
-  ID=$(echo "$ANIMALS_JSON" | jq -r ".data.animals[] | select(.category==\"$CATEGORY\") | .id" | head -n1)
+  ID=$(echo "$ANIMALS_JSON" | jq -r ".data.animalsPaginated.data[] | select(.category==\"$CATEGORY\") | .id" | head -n1)
   CATEGORY_IDS[$CATEGORY]=$ID
 done
 
@@ -32,7 +32,7 @@ for CATEGORY in "${!CATEGORY_IDS[@]}"; do
   if [ -n "$ID" ]; then
     echo "- $CATEGORY (id=$ID):"
     curl -s -X POST -H "Content-Type: application/json" --data '{
-      "query": "{ animal(id: '$ID') { id name category species habitat diet conservation_status } }"
+    "query": "{ animal(id: '$ID') { id name category species habitat diet conservation_status } }"
     }' $API_URL | jq .
   fi
 done
@@ -41,17 +41,17 @@ done
 
 echo "\nTest: Search animals by generic search (e.g., 'cat')"
 curl -s -X POST -H "Content-Type: application/json" --data '{
-  "query": "{ animals(search: \"cat\") { id name species habitat category } }"
+  "query": "{ animalsPaginated(search: \"cat\", args: { first: 1000 }) { data { id name species habitat category } } }"
 }' $API_URL | jq .
 
 echo "\nTest: Filter animals by category and habitat (e.g., mammals, forest)"
 curl -s -X POST -H "Content-Type: application/json" --data '{
-  "query": "{ animals(filter: { category: mammals, habitat: \"forest\" }) { id name habitat category } }"
+  "query": "{ animalsPaginated(filter: { category: mammals, habitat: \"forest\" }, args: { first: 1000 }) { data { id name habitat category } } }"
 }' $API_URL | jq .
 
 echo "\nTest: Combined search and filter (search: 'tiger', filter: category mammals)"
 curl -s -X POST -H "Content-Type: application/json" --data '{
-  "query": "{ animals(search: \"tiger\", filter: { category: mammals }) { id name category } }"
+  "query": "{ animalsPaginated(search: \"tiger\", filter: { category: mammals }, args: { first: 1000 }) { data { id name category } } }"
 }' $API_URL | jq .
 
 # Update the first animal (mammals)

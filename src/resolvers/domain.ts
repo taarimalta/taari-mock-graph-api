@@ -4,21 +4,16 @@ const prisma = new PrismaClient();
 
 export const domainResolvers = {
   Query: {
-    domain: async (_parent, { id }) => {
+    domain: async (_parent: any, { id }: { id: any }) => {
       return prisma.domain.findUnique({ where: { id: Number(id) } });
     },
-    domains: async (_parent, { search }) => {
-      return prisma.domain.findMany({
-        where: search ? { name: { contains: search, mode: 'insensitive' } } : {},
-      });
-    },
-    domainsPaginated: async (_parent, { search, orderBy, args }) => {
+  domainsPaginated: async (_parent: any, { search, orderBy, args }: { search?: string; orderBy?: any; args?: any }) => {
       // Implement pagination logic similar to other entities
       // Placeholder: returns all for now
       // Use paginate with includes to fetch creator/modifier and avoid N+1
       const result = await paginate({
-        model: prisma.domain,
-        where: search ? { name: { contains: search, mode: 'insensitive' } } : {},
+  model: prisma.domain,
+  where: search ? { name: { contains: search } } : {},
         orderBy: orderBy ? [{ [orderBy.field.toLowerCase()]: orderBy.direction.toLowerCase() }] : [{ name: 'asc' }],
         first: args?.first || 20,
         include: { creator: true, modifier: true },
@@ -30,43 +25,45 @@ export const domainResolvers = {
       };
     },
   },
-  Mutation: {
-    createDomain: async (_parent, { name, parentId }, context) => {
+    Mutation: {
+    createDomain: async (_parent: any, { input }: { input: any }, context: { userId?: number }) => {
       // createdBy/modifiedBy should come from context.userId
+      const data = input || {};
       return prisma.domain.create({
         data: {
-          name,
-          parentId: parentId ? Number(parentId) : null,
+          name: data.name,
+          parentId: data.parentId ? Number(data.parentId) : null,
           createdBy: context.userId,
           modifiedBy: context.userId,
         },
       });
     },
-    updateDomain: async (_parent, { id, name, parentId }, context) => {
+    updateDomain: async (_parent: any, { input }: { input: any }, context: { userId?: number }) => {
+      const data = input || {};
       return prisma.domain.update({
-        where: { id: Number(id) },
+        where: { id: Number(data.id) },
         data: {
-          name,
-          parentId: parentId ? Number(parentId) : undefined,
+          name: data.name,
+          parentId: data.parentId ? Number(data.parentId) : undefined,
           modifiedBy: context.userId,
         },
       });
     },
-    deleteDomain: async (_parent, { id }) => {
+    deleteDomain: async (_parent: any, { id }: { id: any }) => {
       return prisma.domain.delete({ where: { id: Number(id) } });
     },
   },
   Domain: {
-    parent: async (domain) => {
+    parent: async (domain: any) => {
       if (!domain.parentId) return null;
       return prisma.domain.findUnique({ where: { id: domain.parentId } });
     },
-    createdBy: async (domain) => {
+    createdBy: async (domain: any) => {
       if (domain.creator) return domain.creator;
       if (!domain.createdBy) return null;
       return prisma.user.findUnique({ where: { id: domain.createdBy } });
     },
-    modifiedBy: async (domain) => {
+    modifiedBy: async (domain: any) => {
       if (domain.modifier) return domain.modifier;
       if (!domain.modifiedBy) return null;
       return prisma.user.findUnique({ where: { id: domain.modifiedBy } });

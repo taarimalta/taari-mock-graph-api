@@ -28,7 +28,7 @@ describe('Country mutation header enforcement', () => {
 describe('Animal mutation header enforcement', () => {
   it('should throw error if x-user-id header is missing for createAnimal', async () => {
     const res = await exec({
-      query: `mutation { createAnimal(name: "Testimal", category: mammals) { id name } }`,
+      query: `mutation { createAnimal(input: { name: "Testimal", category: mammals }) { id name } }`,
     });
     expect(res.errors).toBeDefined();
     expect(res.errors?.[0].message).toMatch(/x-user-id header is required and must be a valid user ID number/);
@@ -98,7 +98,7 @@ describe('Animal mutation header enforcement', () => {
 
   it('should throw error if x-user-id header is not a valid number for createAnimal', async () => {
     const res = await exec(
-      { query: `mutation { createAnimal(name: "Testimal", category: mammals) { id name } }` },
+      { query: `mutation { createAnimal(input: { name: "Testimal", category: mammals }) { id name } }` },
       { req: { headers: { 'x-user-id': 'notanumber' } }, res: {} } as any
     );
     expect(res.errors).toBeDefined();
@@ -107,7 +107,7 @@ describe('Animal mutation header enforcement', () => {
 
   it('should throw error if x-user-id header is missing for updateAnimal', async () => {
     const res = await exec({
-      query: `mutation { updateAnimal(id: 1, name: "Testimal") { id name } }`,
+      query: `mutation { updateAnimal(input: { id: 1, name: "Testimal" }) { id name } }`,
     });
     expect(res.errors).toBeDefined();
     expect(res.errors?.[0].message).toMatch(/x-user-id header is required and must be a valid user ID number/);
@@ -115,7 +115,7 @@ describe('Animal mutation header enforcement', () => {
 
   it('should throw error if x-user-id header is not a valid number for updateAnimal', async () => {
     const res = await exec(
-      { query: `mutation { updateAnimal(id: 1, name: "Testimal") { id name } }` },
+      { query: `mutation { updateAnimal(input: { id: 1, name: "Testimal" }) { id name } }` },
       { req: { headers: { 'x-user-id': 'notanumber' } }, res: {} } as any
     );
     expect(res.errors).toBeDefined();
@@ -124,7 +124,7 @@ describe('Animal mutation header enforcement', () => {
 });
   it('should throw error if x-user-id header is not a valid number for createCountry', async () => {
     const res = await exec(
-      { query: `mutation { createCountry(name: "Testland", continent: africa) { id name } }` },
+      { query: `mutation { createCountry(input: { name: "Testland", continent: africa }) { id name } }` },
       { req: { headers: { 'x-user-id': 'notanumber' } }, res: {} } as any
     );
     expect(res.errors).toBeDefined();
@@ -133,7 +133,7 @@ describe('Animal mutation header enforcement', () => {
 
   it('should throw error if x-user-id header is missing for updateCountry', async () => {
     const res = await exec({
-      query: `mutation { updateCountry(id: 1, name: "Testland") { id name } }`,
+      query: `mutation { updateCountry(input: { id: 1, name: "Testland" }) { id name } }`,
     });
     expect(res.errors).toBeDefined();
     expect(res.errors?.[0].message).toMatch(/x-user-id header must be a valid user ID number/);
@@ -141,7 +141,7 @@ describe('Animal mutation header enforcement', () => {
 
   it('should throw error if x-user-id header is not a valid number for updateCountry', async () => {
     const res = await exec(
-      { query: `mutation { updateCountry(id: 1, name: "Testland") { id name } }` },
+      { query: `mutation { updateCountry(input: { id: 1, name: "Testland" }) { id name } }` },
       { req: { headers: { 'x-user-id': 'notanumber' } }, res: {} } as any
     );
     expect(res.errors).toBeDefined();

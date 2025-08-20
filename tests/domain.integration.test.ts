@@ -36,7 +36,7 @@ describe('Domain GraphQL API', () => {
       {
         query: `
           mutation CreateDomain($name: String!) {
-            createDomain(name: $name) {
+            createDomain(input: { name: $name }) {
               id
               name
               createdBy { id }
@@ -88,7 +88,7 @@ describe('Domain GraphQL API', () => {
       {
         query: `
           mutation UpdateDomain($id: ID!, $name: String!) {
-            updateDomain(id: $id, name: $name) {
+            updateDomain(input: { id: $id, name: $name }) {
               id
               name
             }

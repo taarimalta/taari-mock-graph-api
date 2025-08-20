@@ -55,30 +55,20 @@ export const countryResolvers = {
     },
   },
   Mutation: {
-    createCountry: async (
-      _: any,
-      args: {
-        name: string;
-        capital?: string;
-        population?: number;
-        area?: number;
-        currency?: string;
-        continent: string;
-      },
-      context: any
-    ) => {
+    createCountry: async (_: any, args: { input: any }, context: any) => {
       const userId = context.userId;
       if (typeof userId !== 'number' || !Number.isFinite(userId) || userId <= 0) {
         throw new Error('x-user-id header must be a valid user ID number');
       }
+      const input = args.input || {};
       return await prisma.country.create({
         data: {
-          name: args.name,
-          capital: args.capital,
-          population: args.population,
-          area: args.area,
-          currency: args.currency,
-          continent: args.continent,
+          name: input.name,
+          capital: input.capital,
+          population: input.population,
+          area: input.area,
+          currency: input.currency,
+          continent: input.continent,
           createdBy: userId,
           modifiedBy: userId,
           createdAt: new Date(),
@@ -86,32 +76,21 @@ export const countryResolvers = {
         },
       });
     },
-    updateCountry: async (
-      _: any,
-      args: {
-        id: number;
-        name?: string;
-        capital?: string;
-        population?: number;
-        area?: number;
-        currency?: string;
-        continent?: string;
-      },
-      context: any
-    ) => {
+    updateCountry: async (_: any, args: { input: any }, context: any) => {
       const userId = context.userId;
       if (typeof userId !== 'number' || !Number.isFinite(userId) || userId <= 0) {
         throw new Error('x-user-id header must be a valid user ID number');
       }
+      const input = args.input || {};
       return await prisma.country.update({
-        where: { id: Number(args.id) },
+        where: { id: Number(input.id) },
         data: {
-          ...(args.name !== undefined ? { name: args.name } : {}),
-          ...(args.capital !== undefined ? { capital: args.capital } : {}),
-          ...(args.population !== undefined ? { population: args.population } : {}),
-          ...(args.area !== undefined ? { area: args.area } : {}),
-          ...(args.currency !== undefined ? { currency: args.currency } : {}),
-          ...(args.continent !== undefined ? { continent: args.continent } : {}),
+          ...(input.name !== undefined ? { name: input.name } : {}),
+          ...(input.capital !== undefined ? { capital: input.capital } : {}),
+          ...(input.population !== undefined ? { population: input.population } : {}),
+          ...(input.area !== undefined ? { area: input.area } : {}),
+          ...(input.currency !== undefined ? { currency: input.currency } : {}),
+          ...(input.continent !== undefined ? { continent: input.continent } : {}),
           modifiedBy: userId,
           modifiedAt: new Date(),
         },

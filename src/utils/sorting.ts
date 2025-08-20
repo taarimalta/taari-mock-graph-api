@@ -33,6 +33,28 @@ export function mapAnimalOrderField(field: string): string {
   }
 }
 
+export function mapUserOrderField(field: string): string {
+  const key = (field || '').toString().toUpperCase();
+  switch (key) {
+    case 'USERNAME':
+      return 'username';
+    case 'EMAIL':
+      return 'email';
+    case 'FIRSTNAME':
+      return 'firstName';
+    case 'LASTNAME':
+      return 'lastName';
+    case 'CREATEDAT':
+      return 'createdAt';
+    case 'MODIFIEDAT':
+      return 'modifiedAt';
+    case 'ID':
+      return 'id';
+    default:
+      return 'username';
+  }
+}
+
 export function buildOrderBy(field: string, direction: SortDirection): any[] {
   // Always include ID for stable sorting
   return [

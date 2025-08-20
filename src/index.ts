@@ -16,21 +16,23 @@ import { countryResolvers } from './resolvers/country';
 import { animalResolvers } from './resolvers/animal';
 import { userResolvers } from './resolvers/user';
 import { domainResolvers } from './resolvers/domain';
+import scalarResolvers from './schema/scalars';
 import logger from './logger';
 import { createContext } from './context';
+import type { Context } from './context';
 
 import type { ApolloServerPlugin, GraphQLRequestContext, GraphQLRequestContextWillSendResponse, GraphQLRequestContextDidEncounterErrors } from '@apollo/server';
 
 const loggingPlugin: ApolloServerPlugin = {
-  async requestDidStart(requestContext: GraphQLRequestContext<any>) {
+  async requestDidStart(requestContext: GraphQLRequestContext<Context>) {
     const start = Date.now();
     logger.info(`➡️  Incoming GraphQL request: ${requestContext.request.operationName || 'Anonymous'} | Query: ${requestContext.request.query?.replace(/\s+/g, ' ').trim()} | Variables: ${JSON.stringify(requestContext.request.variables)}`);
     return {
-      async willSendResponse(context: GraphQLRequestContextWillSendResponse<any>) {
+      async willSendResponse(context: GraphQLRequestContextWillSendResponse<Context>) {
         const duration = Date.now() - start;
         logger.info(`⬅️  Response sent (${context.request.operationName || 'Anonymous'}) in ${duration}ms`);
       },
-      async didEncounterErrors(context: GraphQLRequestContextDidEncounterErrors<any>) {
+      async didEncounterErrors(context: GraphQLRequestContextDidEncounterErrors<Context>) {
         logger.error({ errors: context.errors }, '❌ GraphQL Error');
       }
     };
@@ -39,9 +41,10 @@ const loggingPlugin: ApolloServerPlugin = {
 
 
 async function startServer() {
-  const server = new ApolloServer<{ userId: number | undefined }>({
+  const server = new ApolloServer<Context>({
     typeDefs,
     resolvers: {
+      ...scalarResolvers,
       Query: {
         ...countryResolvers.Query,
         ...animalResolvers.Query,
@@ -53,6 +56,9 @@ async function startServer() {
         ...animalResolvers.Mutation,
         ...domainResolvers.Mutation,
       },
+      User: userResolvers.User,
+      Country: countryResolvers.Country,
+      Animal: animalResolvers.Animal,
       Domain: domainResolvers.Domain,
     },
     plugins: [loggingPlugin],
@@ -115,7 +121,11 @@ async function startServer() {
 
   app.use('/graphql', expressMiddleware(server, {
     context: async ({ req }: { req: Request }) => {
-      return { userId: req.userId as number | undefined };
+      // Build the canonical Context (includes prisma and normalized headers)
+      const ctx = createContext(req.headers as any);
+      // Prefer the middleware-injected userId (validated earlier) when present
+      ctx.userId = req.userId as number | undefined;
+      return ctx;
     }
   }));
 
