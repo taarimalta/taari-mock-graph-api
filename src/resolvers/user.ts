@@ -63,7 +63,12 @@ export const userResolvers = {
       if (existing) throw new Error('username or email already in use');
 
       const now = new Date();
-      return prisma.user.create({ data: { username: input.username, email: input.email, firstName: input.firstName, lastName: input.lastName, createdAt: now, modifiedAt: now } });
+      const createData: any = { username: input.username, email: input.email, firstName: input.firstName, lastName: input.lastName, createdAt: now, modifiedAt: now };
+      if (context?.userId && Number.isFinite(context.userId) && context.userId > 0) {
+        createData.createdBy = context.userId;
+        createData.modifiedBy = context.userId;
+      }
+      return prisma.user.create({ data: createData });
     },
     updateUser: async (_: any, args: { input: any }, context: { userId?: number }) => {
       if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
@@ -88,6 +93,9 @@ export const userResolvers = {
       if (input.lastName !== undefined) updateData.lastName = input.lastName;
 
       updateData.modifiedAt = new Date();
+      if (context?.userId && Number.isFinite(context.userId) && context.userId > 0) {
+        updateData.modifiedBy = context.userId;
+      }
 
       try {
         return await prisma.user.update({ where: { id }, data: updateData });

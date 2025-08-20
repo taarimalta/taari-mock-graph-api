@@ -15,10 +15,18 @@ model User {
   lastName  String?
   createdAt DateTime @default(now())
   modifiedAt DateTime @default(now())
+  createdBy Int?
+  modifiedBy Int?
+  creator   User?   @relation("UserCreatedBy", fields: [createdBy], references: [id])
+  modifier  User?   @relation("UserModifiedBy", fields: [modifiedBy], references: [id])
+  createdUsers User[] @relation("UserCreatedBy")
+  modifiedUsers User[] @relation("UserModifiedBy")
   countriesCreated Country[] @relation("CountryCreatedBy")
   countriesModified Country[] @relation("CountryModifiedBy")
   animalsCreated Animal[] @relation("AnimalCreatedBy")
   animalsModified Animal[] @relation("AnimalModifiedBy")
+  domainsCreated Domain[] @relation("DomainCreatedBy")
+  domainsModified Domain[] @relation("DomainModifiedBy")
 }
 
 model Country {
@@ -51,4 +59,18 @@ model Animal {
   modifiedBy Int?
   creator   User?   @relation("AnimalCreatedBy", fields: [createdBy], references: [id])
   modifier  User?   @relation("AnimalModifiedBy", fields: [modifiedBy], references: [id])
+}
+
+model Domain {
+  id         Int      @id @default(autoincrement())
+  name       String
+  parentId   Int?
+  parent     Domain?  @relation("DomainParent", fields: [parentId], references: [id])
+  children   Domain[] @relation("DomainParent")
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime?
+  createdBy  Int?
+  modifiedBy Int?
+  creator    User?   @relation("DomainCreatedBy", fields: [createdBy], references: [id])
+  modifier   User?   @relation("DomainModifiedBy", fields: [modifiedBy], references: [id])
 }

@@ -15,6 +15,7 @@ import { typeDefs } from './schema/typeDefs';
 import { countryResolvers } from './resolvers/country';
 import { animalResolvers } from './resolvers/animal';
 import { userResolvers } from './resolvers/user';
+import { domainResolvers } from './resolvers/domain';
 import logger from './logger';
 import { createContext } from './context';
 
@@ -45,11 +46,14 @@ async function startServer() {
         ...countryResolvers.Query,
         ...animalResolvers.Query,
         ...userResolvers.Query,
+        ...domainResolvers.Query,
       },
       Mutation: {
         ...countryResolvers.Mutation,
         ...animalResolvers.Mutation,
+        ...domainResolvers.Mutation,
       },
+      Domain: domainResolvers.Domain,
     },
     plugins: [loggingPlugin],
   });

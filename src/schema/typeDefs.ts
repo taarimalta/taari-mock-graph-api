@@ -47,8 +47,8 @@ export const typeDefs = `
     continent: Continent!
     createdAt: DateTime!
     modifiedAt: DateTime!
-    createdBy: Int!
-    modifiedBy: Int!
+  createdBy: Int
+  modifiedBy: Int
   }
 
   """
@@ -79,7 +79,10 @@ export const typeDefs = `
     lastName: String
     createdAt: DateTime!
     modifiedAt: DateTime!
+  createdBy: Int!
+  modifiedBy: Int!
   }
+
 
   """
   Pagination metadata returned with any paginated list.
@@ -368,4 +371,88 @@ export const typeDefs = `
     """
     deleteUser(id: ID!): User
   }
+  
+    """
+    Sortable fields for domains.
+    Used with DomainOrder to control result ordering.
+    """
+    enum DomainOrderField {
+      NAME
+      ID
+    }
+
+    """
+    Defines ordering of domain results.
+    """
+    input DomainOrder {
+      field: DomainOrderField! = NAME
+      direction: SortDirection! = ASC
+    }
+
+    """
+    Paginated list of domains, including the data and pagination metadata.
+    """
+    type DomainPage {
+      data: [Domain!]!
+      pagination: Pagination!
+    }
+
+    """
+    Domain information including hierarchy and audit fields.
+    """
+    type Domain {
+      id: ID!
+      name: String!
+      parent: Domain
+      createdAt: DateTime!
+      modifiedAt: DateTime!
+      createdBy: Int!
+      modifiedBy: Int!
+    }
+
+    extend type Query {
+      """
+      Returns a paginated list of domains with optional search and ordering.
+      """
+      domainsPaginated(
+        search: String,
+        orderBy: DomainOrder = { field: NAME, direction: ASC },
+        args: PageArgs = { first: 20 }
+      ): DomainPage!
+
+      """
+      Returns all domains matching optional search.
+      Deprecated in favor of domainsPaginated for performance and scalability.
+      """
+      domains(search: String): [Domain!]! @deprecated(reason: "Use domainsPaginated")
+
+      """
+      Returns a single domain by its unique ID.
+      """
+      domain(id: ID!): Domain
+    }
+
+    extend type Mutation {
+      """
+      Creates a new domain with the specified details.
+      """
+      createDomain(
+        name: String!,
+        parentId: ID
+      ): Domain!
+
+      """
+      Updates an existing domain by its ID with provided fields.
+      """
+      updateDomain(
+        id: ID!,
+        name: String,
+        parentId: ID
+      ): Domain
+
+      """
+      Deletes a domain by its unique ID.
+      """
+      deleteDomain(id: ID!): Domain
+    }
 `;

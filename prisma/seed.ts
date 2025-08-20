@@ -3,6 +3,16 @@ import logger from '../src/logger';
 const prisma = new PrismaClient();
 
 async function main() {
+  // Sanity check: ensure required audit columns exist on User before we mutate data.
+  const cols: { name: string }[] = await prisma.$queryRawUnsafe(`PRAGMA table_info('User');`);
+  const colNames = cols.map(c => c.name);
+  const required = ['createdBy', 'modifiedBy'];
+  const missing = required.filter(r => !colNames.includes(r));
+  if (missing.length) {
+    logger.error(`Seed aborted: required User columns missing: ${missing.join(', ')}.\nRun migrations (npm run db:migrate) to apply schema before seeding.`);
+    await prisma.$disconnect();
+    process.exit(1);
+  }
   // Delete all data (order matters for foreign keys, if any)
   await prisma.animal.deleteMany({});
   await prisma.country.deleteMany({});
@@ -23,6 +33,11 @@ async function main() {
     createdUsers.push(created);
   }
   const seedUserId = createdUsers[0].id;
+
+  // Update created users to set createdBy/modifiedBy to the seedUserId (self-referential)
+  for (const u of createdUsers) {
+    await prisma.user.update({ where: { id: u.id }, data: { createdBy: seedUserId, modifiedBy: seedUserId } });
+  }
 
   // Seed countries (one for each continent)
   const countrySeed = [
