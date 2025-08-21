@@ -15,7 +15,7 @@
   "db:migrate": "npx prisma migrate dev",
   "db:check": "npx prisma migrate status --schema=prisma/schema.prisma",
   "db:seed": "ts-node prisma/seed.ts",
-    "test": "jest",
+    "test": "jest --runInBand",
     "test:ci": "jest --runInBand --colors",
     "test:watch": "jest --watch"
   },
