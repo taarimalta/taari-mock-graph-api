@@ -135,6 +135,15 @@ export const typeDefs = `
     ID
   }
 
+  """
+  Sortable fields for user domain access.
+  """
+  enum UserDomainAccessOrderField {
+    CREATEDAT
+    MODIFIEDAT
+    ID
+  }
+
   # =============================================================================
   # CORE ENTITY TYPES
   # =============================================================================
@@ -152,6 +161,7 @@ export const typeDefs = `
     modifiedAt: DateTime!
     createdBy: User
     modifiedBy: User
+    domainAccess: [UserDomainAccess!]!
   }
 
   """
@@ -199,11 +209,21 @@ export const typeDefs = `
     modifiedAt: DateTime!
     createdBy: User
     modifiedBy: User
+    usersWithAccess: [UserDomainAccess!]!
   }
 
-  # =============================================================================
-  # PAGINATION TYPES
-  # =============================================================================
+  """
+  Junction type representing user access to domains.
+  """
+  type UserDomainAccess implements Node {
+    id: ID!
+    user: User!
+    domain: Domain!
+    createdAt: DateTime!
+    modifiedAt: DateTime!
+    createdBy: User
+    modifiedBy: User
+  }
 
   """
   Pagination metadata returned with any paginated list.
@@ -264,6 +284,14 @@ export const typeDefs = `
     pagination: Pagination!
   }
 
+  """
+  Paginated list of user domain access records.
+  """
+  type UserDomainAccessPage implements Page {
+    data: [UserDomainAccess!]!
+    pagination: Pagination!
+  }
+
   # =============================================================================
   # INPUT TYPES
   # =============================================================================
@@ -295,6 +323,14 @@ export const typeDefs = `
 
   input UserOrder {
     field: UserOrderField! = USERNAME
+    direction: SortDirection! = ASC
+  }
+
+  """
+  Defines ordering of user domain access results.
+  """
+  input UserDomainAccessOrder {
+    field: UserDomainAccessOrderField! = CREATEDAT
     direction: SortDirection! = ASC
   }
 
@@ -353,6 +389,18 @@ export const typeDefs = `
     name: String
     parentId: ID
     # Audit field filters
+    createdAt: DateTime
+    modifiedAt: DateTime
+    createdBy: ID
+    modifiedBy: ID
+  }
+
+  """
+  Filters for user domain access records.
+  """
+  input UserDomainAccessFilter {
+    userId: ID
+    domainId: ID
     createdAt: DateTime
     modifiedAt: DateTime
     createdBy: ID
@@ -422,6 +470,22 @@ export const typeDefs = `
     id: ID!
     name: String
     parentId: ID
+  }
+
+  """
+  Input for granting domain access to a user.
+  """
+  input GrantDomainAccessInput {
+    userId: ID!
+    domainId: ID!
+  }
+
+  """
+  Input for revoking domain access from a user.
+  """
+  input RevokeDomainAccessInput {
+    userId: ID!
+    domainId: ID!
   }
 
   # =============================================================================
@@ -498,6 +562,31 @@ export const typeDefs = `
     Returns a single domain by its unique ID.
     """
     domain(id: ID!): Domain
+
+    # User Domain Access Queries
+    """
+    Returns a paginated list of user domain access records with optional filtering and ordering.
+    """
+    userDomainAccessPaginated(
+      filter: UserDomainAccessFilter,
+      orderBy: UserDomainAccessOrder = { field: CREATEDAT, direction: ASC },
+      args: PageArgs = { first: 20 }
+    ): UserDomainAccessPage!
+
+    """
+    Checks if a user has access to a specific domain.
+    """
+    hasUserDomainAccess(userId: ID!, domainId: ID!): Boolean!
+
+    """
+    Returns a paginated list of domains accessible by a user.
+    """
+    userAccessibleDomains(userId: ID!, args: PageArgs = { first: 20 }): DomainPage!
+
+    """
+    Returns a paginated list of users with access to a specific domain.
+    """
+    domainAccessibleUsers(domainId: ID!, args: PageArgs = { first: 20 }): UserPage!
   }
 
   # =============================================================================
@@ -536,5 +625,26 @@ export const typeDefs = `
   createDomain(input: CreateDomainInput!): Domain!
   updateDomain(input: UpdateDomainInput!): Domain
   deleteDomain(id: ID!): Domain
+
+    # User Domain Access Mutations
+    """
+    Grants domain access to a user.
+    """
+    grantDomainAccess(input: GrantDomainAccessInput!): UserDomainAccess!
+
+    """
+    Revokes domain access from a user.
+    """
+    revokeDomainAccess(input: RevokeDomainAccessInput!): UserDomainAccess
+
+    """
+    Grants domain access to multiple domains for a user.
+    """
+    grantMultipleDomainAccess(userId: ID!, domainIds: [ID!]!): [UserDomainAccess!]!
+
+    """
+    Revokes domain access from multiple domains for a user.
+    """
+    revokeMultipleDomainAccess(userId: ID!, domainIds: [ID!]!): [UserDomainAccess]!
   }
 `;

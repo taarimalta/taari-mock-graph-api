@@ -16,6 +16,7 @@ import { countryResolvers } from './resolvers/country';
 import { animalResolvers } from './resolvers/animal';
 import { userResolvers } from './resolvers/user';
 import { domainResolvers } from './resolvers/domain';
+import { userDomainAccessResolvers } from './resolvers/userDomainAccess';
 import scalarResolvers from './schema/scalars';
 import logger from './logger';
 import { createContext } from './context';
@@ -50,16 +51,19 @@ async function startServer() {
         ...animalResolvers.Query,
         ...userResolvers.Query,
         ...domainResolvers.Query,
+        ...userDomainAccessResolvers.Query,
       },
       Mutation: {
         ...countryResolvers.Mutation,
         ...animalResolvers.Mutation,
         ...domainResolvers.Mutation,
+        ...userDomainAccessResolvers.Mutation,
       },
       User: userResolvers.User,
       Country: countryResolvers.Country,
       Animal: animalResolvers.Animal,
       Domain: domainResolvers.Domain,
+      UserDomainAccess: userDomainAccessResolvers.UserDomainAccess,
     },
     plugins: [loggingPlugin],
   });

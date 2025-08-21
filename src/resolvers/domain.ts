@@ -54,19 +54,29 @@ export const domainResolvers = {
     },
   },
   Domain: {
-    parent: async (domain: any) => {
+    parent: async (domain: any, _args: any, context: any) => {
       if (!domain.parentId) return null;
+      if (context?.loadDomain) return context.loadDomain(domain.parentId);
       return prisma.domain.findUnique({ where: { id: domain.parentId } });
     },
-    createdBy: async (domain: any) => {
+    createdBy: async (domain: any, _args: any, context: any) => {
       if (domain.creator) return domain.creator;
       if (!domain.createdBy) return null;
+      if (context?.loadUser) return context.loadUser(domain.createdBy);
       return prisma.user.findUnique({ where: { id: domain.createdBy } });
     },
-    modifiedBy: async (domain: any) => {
+    modifiedBy: async (domain: any, _args: any, context: any) => {
       if (domain.modifier) return domain.modifier;
       if (!domain.modifiedBy) return null;
+      if (context?.loadUser) return context.loadUser(domain.modifiedBy);
       return prisma.user.findUnique({ where: { id: domain.modifiedBy } });
+    },
+    usersWithAccess: async (domain: any) => {
+      if (domain.userAccess) return domain.userAccess;
+      return prisma.userDomainAccess.findMany({
+        where: { domainId: Number(domain.id) },
+        include: { user: true, creator: true, modifier: true },
+      });
     },
   },
 };

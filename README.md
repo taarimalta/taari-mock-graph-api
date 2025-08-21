@@ -278,6 +278,19 @@ cd http
 
 These scripts use `curl` and require `jq` for pretty-printing JSON. They will create, query, update, and delete sample records.
 
+
+## User-Domain Access (examples)
+
+A new set of GraphQL operations is available to manage user access to domains. See `http/user-domain-access.graphql` for example queries and mutations covering:
+
+- Granting and revoking single domain access
+- Granting and revoking multiple domains in a single mutation
+- Checking whether a user has access to a domain
+- Listing domains accessible to a user (paginated)
+- Listing users with access to a domain (paginated)
+
+You can run those examples against the dev server (http://localhost:4000/graphql) using a GraphQL client or by copying the queries into your IDE.
+
 ## 🧑‍💻 Testing with a GraphQL Client
 
 You can also test the API interactively using a GraphQL client:

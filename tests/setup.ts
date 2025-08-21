@@ -4,8 +4,10 @@ const prisma = new PrismaClient();
 
 export async function setupTestData() {
   // Clean and seed test data before each test suite
+  await prisma.userDomainAccess.deleteMany({});
   await prisma.animal.deleteMany({});
   await prisma.country.deleteMany({});
+  await prisma.domain.deleteMany({});
   await prisma.user.deleteMany({});
 
   // Create test user
@@ -17,6 +19,11 @@ export async function setupTestData() {
       lastName: 'User',
     }
   });
+
+  // Create domain and user access
+  const globalDomain = await prisma.domain.create({ data: { name: 'Global', createdBy: testUser.id, modifiedBy: testUser.id } });
+  const regionDomain = await prisma.domain.create({ data: { name: 'Region', parentId: globalDomain.id, createdBy: testUser.id, modifiedBy: testUser.id } });
+  await prisma.userDomainAccess.create({ data: { userId: testUser.id, domainId: globalDomain.id, createdBy: testUser.id, modifiedBy: testUser.id } });
 
   // Seed countries
   const countries = [
@@ -59,7 +66,9 @@ export async function setupTestData() {
 }
 
 export async function cleanupTestData() {
+  await prisma.userDomainAccess.deleteMany({});
   await prisma.animal.deleteMany({});
   await prisma.country.deleteMany({});
+  await prisma.domain.deleteMany({});
   await prisma.user.deleteMany({});
 }

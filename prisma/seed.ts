@@ -14,12 +14,14 @@ async function main() {
     process.exit(1);
   }
   // Delete all data (order matters for foreign keys, if any)
+  await prisma.userDomainAccess.deleteMany({});
   await prisma.animal.deleteMany({});
   await prisma.country.deleteMany({});
+  await prisma.domain.deleteMany({});
   await prisma.user.deleteMany({});
 
   // Reset SQLite auto-increment counters (optional, for clean IDs)
-  await prisma.$executeRawUnsafe('DELETE FROM sqlite_sequence WHERE name = "Animal" OR name = "Country" OR name = "User";');
+  await prisma.$executeRawUnsafe('DELETE FROM sqlite_sequence WHERE name = "Animal" OR name = "Country" OR name = "User" OR name = "Domain" OR name = "UserDomainAccess";');
 
   // Seed users
   const now = new Date();
@@ -37,6 +39,30 @@ async function main() {
   // Update created users to set createdBy/modifiedBy to the seedUserId (self-referential)
   for (const u of createdUsers) {
     await prisma.user.update({ where: { id: u.id }, data: { createdBy: seedUserId, modifiedBy: seedUserId } });
+  }
+
+  // Seed domains (hierarchical example)
+  const createdDomains: { id: number }[] = [];
+  const domainRoot = await prisma.domain.create({ data: { name: 'Global', createdAt: now, modifiedAt: now, createdBy: seedUserId, modifiedBy: seedUserId } });
+  createdDomains.push(domainRoot);
+  const domainEmea = await prisma.domain.create({ data: { name: 'EMEA', createdAt: now, modifiedAt: now, createdBy: seedUserId, modifiedBy: seedUserId } });
+  createdDomains.push(domainEmea);
+  const domainEurope = await prisma.domain.create({ data: { name: 'Europe', parentId: domainEmea.id, createdAt: now, modifiedAt: now, createdBy: seedUserId, modifiedBy: seedUserId } });
+  createdDomains.push(domainEurope);
+
+  // Seed user domain access for the seed user to each created domain
+  for (const d of createdDomains) {
+    await prisma.userDomainAccess.create({ data: { userId: seedUserId, domainId: d.id, createdAt: now, modifiedAt: now, createdBy: seedUserId, modifiedBy: seedUserId } });
+  }
+
+  // Additional access: grant bob (second seeded user) access to some domains for variety
+  const bobId = createdUsers[1].id;
+  if (createdDomains.length > 1) {
+    // Bob gets access to the second and third domains (if present)
+    await prisma.userDomainAccess.create({ data: { userId: bobId, domainId: createdDomains[1].id, createdAt: now, modifiedAt: now, createdBy: seedUserId, modifiedBy: seedUserId } });
+    if (createdDomains[2]) {
+      await prisma.userDomainAccess.create({ data: { userId: bobId, domainId: createdDomains[2].id, createdAt: now, modifiedAt: now, createdBy: seedUserId, modifiedBy: seedUserId } });
+    }
   }
 
   // Seed countries (one for each continent)

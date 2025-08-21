@@ -62,3 +62,17 @@ export function buildOrderBy(field: string, direction: SortDirection): any[] {
     { id: direction.toLowerCase() },
   ];
 }
+
+export function mapUserDomainAccessOrderField(field: string): string {
+  const key = (field || '').toString().toUpperCase();
+  switch (key) {
+    case 'CREATEDAT':
+      return 'createdAt';
+    case 'MODIFIEDAT':
+      return 'modifiedAt';
+    case 'ID':
+      return 'id';
+    default:
+      return 'createdAt';
+  }
+}

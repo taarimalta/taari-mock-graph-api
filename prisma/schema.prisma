@@ -1,76 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model User {
-  id        Int    @id @default(autoincrement())
-  username  String @unique
-  email     String @unique
-  firstName String?
-  lastName  String?
-  createdAt DateTime @default(now())
-  modifiedAt DateTime @default(now())
-  createdBy Int?
-  modifiedBy Int?
-  creator   User?   @relation("UserCreatedBy", fields: [createdBy], references: [id])
-  modifier  User?   @relation("UserModifiedBy", fields: [modifiedBy], references: [id])
-  createdUsers User[] @relation("UserCreatedBy")
-  modifiedUsers User[] @relation("UserModifiedBy")
-  countriesCreated Country[] @relation("CountryCreatedBy")
-  countriesModified Country[] @relation("CountryModifiedBy")
-  animalsCreated Animal[] @relation("AnimalCreatedBy")
-  animalsModified Animal[] @relation("AnimalModifiedBy")
-  domainsCreated Domain[] @relation("DomainCreatedBy")
-  domainsModified Domain[] @relation("DomainModifiedBy")
+  id                         Int                @id @default(autoincrement())
+  username                   String             @unique
+  email                      String             @unique
+  firstName                  String?
+  lastName                   String?
+  createdAt                  DateTime           @default(now())
+  modifiedAt                 DateTime           @default(now())
+  createdBy                  Int?
+  modifiedBy                 Int?
+  animalsModified            Animal[]           @relation("AnimalModifiedBy")
+  animalsCreated             Animal[]           @relation("AnimalCreatedBy")
+  countriesModified          Country[]          @relation("CountryModifiedBy")
+  countriesCreated           Country[]          @relation("CountryCreatedBy")
+  domainsModified            Domain[]           @relation("DomainModifiedBy")
+  domainsCreated             Domain[]           @relation("DomainCreatedBy")
+  modifier                   User?              @relation("UserModifiedBy", fields: [modifiedBy], references: [id])
+  modifiedUsers              User[]             @relation("UserModifiedBy")
+  creator                    User?              @relation("UserCreatedBy", fields: [createdBy], references: [id])
+  createdUsers               User[]             @relation("UserCreatedBy")
+  modifiedUserDomainAccesses UserDomainAccess[] @relation("UserDomainAccessModifiedBy")
+  createdUserDomainAccesses  UserDomainAccess[] @relation("UserDomainAccessCreatedBy")
+  domainAccess               UserDomainAccess[]
 }
 
 model Country {
-  id        Int    @id @default(autoincrement())
-  name      String
-  capital   String?
+  id         Int       @id @default(autoincrement())
+  name       String
+  capital    String?
   population Int?
-  area      Float?
-  currency  String?
-  continent String
-  createdAt DateTime @default(now())
+  area       Float?
+  currency   String?
+  continent  String
+  createdAt  DateTime  @default(now())
   modifiedAt DateTime?
-  createdBy Int?
+  createdBy  Int?
   modifiedBy Int?
-  creator   User?   @relation("CountryCreatedBy", fields: [createdBy], references: [id])
-  modifier  User?   @relation("CountryModifiedBy", fields: [modifiedBy], references: [id])
+  modifier   User?     @relation("CountryModifiedBy", fields: [modifiedBy], references: [id])
+  creator    User?     @relation("CountryCreatedBy", fields: [createdBy], references: [id])
 }
 
 model Animal {
-  id                  Int    @id @default(autoincrement())
+  id                  Int       @id @default(autoincrement())
   name                String
   species             String?
   habitat             String?
   diet                String?
   conservation_status String?
   category            String
-  createdAt DateTime @default(now())
-  modifiedAt DateTime?
-  createdBy Int?
-  modifiedBy Int?
-  creator   User?   @relation("AnimalCreatedBy", fields: [createdBy], references: [id])
-  modifier  User?   @relation("AnimalModifiedBy", fields: [modifiedBy], references: [id])
+  createdAt           DateTime  @default(now())
+  modifiedAt          DateTime?
+  createdBy           Int?
+  modifiedBy          Int?
+  modifier            User?     @relation("AnimalModifiedBy", fields: [modifiedBy], references: [id])
+  creator             User?     @relation("AnimalCreatedBy", fields: [createdBy], references: [id])
 }
 
 model Domain {
-  id         Int      @id @default(autoincrement())
+  id         Int                @id @default(autoincrement())
   name       String
   parentId   Int?
-  parent     Domain?  @relation("DomainParent", fields: [parentId], references: [id])
-  children   Domain[] @relation("DomainParent")
-  createdAt  DateTime @default(now())
+  createdAt  DateTime           @default(now())
   modifiedAt DateTime?
   createdBy  Int?
   modifiedBy Int?
-  creator    User?   @relation("DomainCreatedBy", fields: [createdBy], references: [id])
-  modifier   User?   @relation("DomainModifiedBy", fields: [modifiedBy], references: [id])
+  modifier   User?              @relation("DomainModifiedBy", fields: [modifiedBy], references: [id])
+  creator    User?              @relation("DomainCreatedBy", fields: [createdBy], references: [id])
+  parent     Domain?            @relation("DomainParent", fields: [parentId], references: [id])
+  children   Domain[]           @relation("DomainParent")
+  userAccess UserDomainAccess[]
+}
+
+model UserDomainAccess {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  domainId   Int
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @default(now())
+  createdBy  Int?
+  modifiedBy Int?
+  modifier   User?    @relation("UserDomainAccessModifiedBy", fields: [modifiedBy], references: [id])
+  creator    User?    @relation("UserDomainAccessCreatedBy", fields: [createdBy], references: [id])
+  domain     Domain   @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, domainId])
 }

@@ -122,15 +122,25 @@ export const userResolvers = {
   },
   // Field resolvers for User audit relations
   User: {
-    createdBy: async (user: any) => {
+    createdBy: async (user: any, _args: any, context: any) => {
       if (user.creator) return user.creator;
       if (!user.createdBy) return null;
+      if (context?.loadUser) return context.loadUser(user.createdBy);
       return prisma.user.findUnique({ where: { id: user.createdBy } });
     },
-    modifiedBy: async (user: any) => {
+    modifiedBy: async (user: any, _args: any, context: any) => {
       if (user.modifier) return user.modifier;
       if (!user.modifiedBy) return null;
+      if (context?.loadUser) return context.loadUser(user.modifiedBy);
       return prisma.user.findUnique({ where: { id: user.modifiedBy } });
+    },
+    domainAccess: async (user: any, _args: any, context: any) => {
+      if (user.domainAccess) return user.domainAccess;
+      // Use prisma directly; could be optimized with batching later
+      return prisma.userDomainAccess.findMany({
+        where: { userId: Number(user.id) },
+        include: { domain: true, creator: true, modifier: true },
+      });
     },
   },
 };

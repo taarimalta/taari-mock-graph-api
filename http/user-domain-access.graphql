@@ -1,0 +1,59 @@
+# Example queries and mutations for UserDomainAccess
+
+# Grant access for a user to a domain
+mutation GrantDomainAccess($input: GrantDomainAccessInput!) {
+  grantDomainAccess(input: $input) {
+    id
+    user { id username }
+    domain { id name }
+    createdAt
+  }
+}
+
+# Revoke access
+mutation RevokeDomainAccess($input: RevokeDomainAccessInput!) {
+  revokeDomainAccess(input: $input) {
+    id
+    user { id username }
+    domain { id name }
+  }
+}
+
+# Check if a user has access to a domain
+query HasUserDomainAccess($userId: Int!, $domainId: Int!) {
+  hasUserDomainAccess(userId: $userId, domainId: $domainId)
+}
+
+# List domains accessible to a user (paginated)
+query UserAccessibleDomains($userId: Int!, $first: Int) {
+  userAccessibleDomains(userId: $userId, args: { first: $first }) {
+    data { id name }
+    pagination { hasNext endCursor totalCount }
+  }
+}
+
+# List users with access to a domain (paginated)
+query DomainAccessibleUsers($domainId: Int!, $first: Int) {
+  domainAccessibleUsers(domainId: $domainId, args: { first: $first }) {
+    data { id username }
+    pagination { hasNext endCursor totalCount }
+  }
+}
+
+# Grant multiple domains to a user
+mutation GrantMultiple($userId: Int!, $domainIds: [Int!]!) {
+  grantMultipleDomainAccess(userId: $userId, domainIds: $domainIds) {
+    id
+    user { id username }
+    domain { id name }
+  }
+}
+
+# Revoke multiple domains for a user
+mutation RevokeMultiple($userId: Int!, $domainIds: [Int!]!) {
+  revokeMultipleDomainAccess(userId: $userId, domainIds: $domainIds) {
+    id
+    user { id username }
+    domain { id name }
+  }
+}
