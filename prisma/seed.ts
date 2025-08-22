@@ -1,17 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 import logger from '../src/logger';
-const prisma = new PrismaClient();
 
-async function main() {
+export async function seedTestData(prisma: PrismaClient) {
   // Sanity check: ensure required audit columns exist on User before we mutate data.
   const cols: { name: string }[] = await prisma.$queryRawUnsafe(`PRAGMA table_info('User');`);
   const colNames = cols.map(c => c.name);
   const required = ['createdBy', 'modifiedBy'];
   const missing = required.filter(r => !colNames.includes(r));
   if (missing.length) {
-    logger.error(`Seed aborted: required User columns missing: ${missing.join(', ')}.\nRun migrations (npm run db:migrate) to apply schema before seeding.`);
-    await prisma.$disconnect();
-    process.exit(1);
+    throw new Error(`Seed aborted: required User columns missing: ${missing.join(', ')}. Run migrations (npm run db:migrate) to apply schema before seeding.`);
   }
   // Delete all data (order matters for foreign keys, if any)
   await prisma.userDomainAccess.deleteMany({});
@@ -138,24 +135,32 @@ async function main() {
     { name: 'Firefly', species: 'Lampyridae', habitat: 'Forests', diet: 'Omnivore', conservation_status: 'Least Concern', category: 'insects' },
     { name: 'Tiger Moth', species: 'Arctiinae', habitat: 'Forests', diet: 'Herbivore', conservation_status: 'Least Concern', category: 'insects' },
   ];
+  // Insert 10 copies of each animal (first copy keeps original name, duplicates get a numeric suffix)
   for (const animal of animals) {
-    await prisma.animal.create({
-      data: {
-        ...animal,
-        createdAt: now,
-        modifiedAt: now,
-        createdBy: seedUserId,
-        modifiedBy: seedUserId,
-      },
-    });
+    for (let copy = 0; copy < 10; copy++) {
+      const name = copy === 0 ? animal.name : `${animal.name} ${copy + 1}`;
+      await prisma.animal.create({
+        data: {
+          ...animal,
+          name,
+          createdAt: now,
+          modifiedAt: now,
+          createdBy: seedUserId,
+          modifiedBy: seedUserId,
+        },
+      });
+    }
   }
 }
 
-main()
-  .catch((e) => {
-    logger.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+if (require.main === module) {
+  const prisma = new PrismaClient();
+  seedTestData(prisma)
+    .catch((e) => {
+      logger.error(e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

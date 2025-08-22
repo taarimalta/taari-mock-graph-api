@@ -1,11 +1,11 @@
 import { ApolloServer } from '@apollo/server';
-import { createContext } from '../src/context';
-import { typeDefs } from '../src/schema/typeDefs';
-import { countryResolvers } from '../src/resolvers/country';
-import { animalResolvers } from '../src/resolvers/animal';
-import { encodeCursor, decodeCursor, isValidCursor } from '../src/utils/pagination';
-import { buildCountryWhere, buildAnimalWhere } from '../src/utils/filtering';
-import { mapCountryOrderField, mapAnimalOrderField, buildOrderBy } from '../src/utils/sorting';
+import { createContext } from '../../src/context';
+import { typeDefs } from '../../src/schema/typeDefs';
+import { countryResolvers } from '../../src/resolvers/country';
+import { animalResolvers } from '../../src/resolvers/animal';
+import { encodeCursor, decodeCursor, isValidCursor } from '../../src/utils/pagination';
+import { buildCountryWhere, buildAnimalWhere } from '../../src/utils/filtering';
+import { mapCountryOrderField, mapAnimalOrderField, buildOrderBy } from '../../src/utils/sorting';
 
 const server: any = new ApolloServer({
   typeDefs,

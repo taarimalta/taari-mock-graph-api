@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { buildAnimalWhere } from '../utils/filtering';
 import { mapAnimalOrderField, buildOrderBy } from '../utils/sorting';
 import { paginate } from '../utils/pagination';
+import logger from '../logger';
 const prisma = new PrismaClient();
 
 export const animalResolvers = {
@@ -10,7 +11,11 @@ export const animalResolvers = {
       search?: string,
       filter?: any,
       orderBy?: any,
-      args?: any
+      args?: any,
+      first?: number,
+      after?: string,
+      last?: number,
+      before?: string
     }, context: { userId?: number }) => {
       if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
         throw new Error('x-user-id header is required and must be a valid user ID number');
@@ -18,19 +23,64 @@ export const animalResolvers = {
       const where = buildAnimalWhere(args.filter, args.search);
       const orderField = args.orderBy?.field || 'NAME';
       const direction = args.orderBy?.direction || 'ASC';
-      const orderBy = buildOrderBy(mapAnimalOrderField(orderField), direction);
-      const pageArgs = args.args || { first: 20 };
+      // Always use compound sorting: primary field + id as tiebreaker
+      const primaryField = mapAnimalOrderField(orderField);
+      const orderFields = [primaryField, 'id'];
+      const orderBy = [
+        { [primaryField]: direction.toLowerCase() },
+        { id: 'asc' },
+      ];
+      // Accept both top-level and nested args for pagination
+      const rawAfter = args.after ?? args.args?.after;
+      const rawBefore = args.before ?? args.args?.before;
+      // Always ensure after/before are base64 strings
+      function ensureCursorString(cursor: any) {
+        if (!cursor) return undefined;
+        if (typeof cursor === 'string') return cursor;
+        try {
+          return Buffer.from(JSON.stringify(cursor)).toString('base64');
+        } catch (e) {
+          return undefined;
+        }
+      }
+      const pageArgs = {
+        first: args.first ?? args.args?.first,
+        after: ensureCursorString(rawAfter),
+        last: args.last ?? args.args?.last,
+        before: ensureCursorString(rawBefore),
+      };
+      // If neither first nor last is set, default to first: 20
+      if (pageArgs.first == null && pageArgs.last == null) {
+        pageArgs.first = 20;
+      }
+
+      // Debug logging for incoming pagination args
+      logger.info('=== ANIMAL RESOLVER DEBUG ===');
+      logger.info({ args }, 'Incoming args');
+      logger.info({ pageArgs }, 'Resolved pageArgs');
+      logger.info({ orderFields }, 'Order fields (DB)');
+      logger.info({ rawAfter }, 'Raw after argument');
 
       const result = await paginate({
         model: prisma.animal,
         where,
         orderBy,
-  first: pageArgs.first,
-  after: pageArgs.after,
-  last: pageArgs.last,
-  before: pageArgs.before,
-  include: { creator: true, modifier: true },
+        first: pageArgs.first,
+        after: pageArgs.after,
+        last: pageArgs.last,
+        before: pageArgs.before,
+        include: { creator: true, modifier: true },
+        orderFields, // Pass mapped DB field names for cursor encoding
       });
+      // Debug: log cursor contents if available
+      if (result?.pagination?.startCursor) {
+        const decoded = require('../utils/pagination').decodeCursor(result.pagination.startCursor);
+        logger.info({ decoded }, 'Decoded startCursor');
+      }
+      if (result?.pagination?.endCursor) {
+        const decoded = require('../utils/pagination').decodeCursor(result.pagination.endCursor);
+        logger.info({ decoded }, 'Decoded endCursor');
+      }
       return {
         data: Array.isArray(result.items) ? result.items : [],
         pagination: result.pagination,
