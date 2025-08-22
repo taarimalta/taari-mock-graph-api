@@ -17,6 +17,8 @@ model User {
   modifiedAt                 DateTime           @default(now())
   createdBy                  Int?
   modifiedBy                 Int?
+  domainId                   Int?
+  domain                     Domain?            @relation(fields: [domainId], references: [id])
   animalsModified            Animal[]           @relation("AnimalModifiedBy")
   animalsCreated             Animal[]           @relation("AnimalCreatedBy")
   countriesModified          Country[]          @relation("CountryModifiedBy")
@@ -40,6 +42,8 @@ model Country {
   area       Float?
   currency   String?
   continent  String
+  domainId   Int?
+  domain     Domain?   @relation(fields: [domainId], references: [id])
   createdAt  DateTime  @default(now())
   modifiedAt DateTime?
   createdBy  Int?
@@ -56,6 +60,8 @@ model Animal {
   diet                String?
   conservation_status String?
   category            String
+  domainId            Int?
+  domain              Domain?   @relation(fields: [domainId], references: [id])
   createdAt           DateTime  @default(now())
   modifiedAt          DateTime?
   createdBy           Int?
@@ -77,6 +83,9 @@ model Domain {
   parent     Domain?            @relation("DomainParent", fields: [parentId], references: [id])
   children   Domain[]           @relation("DomainParent")
   userAccess UserDomainAccess[]
+  User       User[]
+  Country    Country[]
+  Animal     Animal[]
 }
 
 model UserDomainAccess {

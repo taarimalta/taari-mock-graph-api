@@ -22,13 +22,51 @@ export async function seedTestData(prisma: PrismaClient) {
 
   // Seed users
   const now = new Date();
+  // We'll assign all users to the root domain (domainRoot)
   const users = [
     { username: 'alice', email: 'alice@example.com', firstName: 'Alice', lastName: 'Anderson' },
     { username: 'bob', email: 'bob@example.com', firstName: 'Bob', lastName: 'Brown' }
   ];
   const createdUsers: { id: number }[] = [];
-  for (const user of users) {
-    const created = await prisma.user.create({ data: { ...user, createdAt: now, modifiedAt: now } });
+  // Seed domains (4-level organization hierarchy)
+  const createdDomains: { id: number, name: string, level: number }[] = [];
+  // Top-level organizations (level 1)
+  const orgA = await prisma.domain.create({ data: { name: 'OrgA', createdAt: now, modifiedAt: now, createdBy: null, modifiedBy: null } });
+  createdDomains.push({ id: orgA.id, name: orgA.name, level: 1 });
+  const orgB = await prisma.domain.create({ data: { name: 'OrgB', createdAt: now, modifiedAt: now, createdBy: null, modifiedBy: null } });
+  createdDomains.push({ id: orgB.id, name: orgB.name, level: 1 });
+  // Level 2: Regions
+  const orgARegion1 = await prisma.domain.create({ data: { name: 'OrgA - Americas', parentId: orgA.id, createdAt: now, modifiedAt: now, createdBy: null, modifiedBy: null } });
+  createdDomains.push({ id: orgARegion1.id, name: orgARegion1.name, level: 2 });
+  const orgARegion2 = await prisma.domain.create({ data: { name: 'OrgA - Europe', parentId: orgA.id, createdAt: now, modifiedAt: now, createdBy: null, modifiedBy: null } });
+  createdDomains.push({ id: orgARegion2.id, name: orgARegion2.name, level: 2 });
+  const orgBRegion1 = await prisma.domain.create({ data: { name: 'OrgB - Asia', parentId: orgB.id, createdAt: now, modifiedAt: now, createdBy: null, modifiedBy: null } });
+  createdDomains.push({ id: orgBRegion1.id, name: orgBRegion1.name, level: 2 });
+  const orgBRegion2 = await prisma.domain.create({ data: { name: 'OrgB - Africa', parentId: orgB.id, createdAt: now, modifiedAt: now, createdBy: null, modifiedBy: null } });
+  createdDomains.push({ id: orgBRegion2.id, name: orgBRegion2.name, level: 2 });
+  // Level 3: Departments
+  const orgADept1 = await prisma.domain.create({ data: { name: 'OrgA - Americas - HR', parentId: orgARegion1.id, createdAt: now, modifiedAt: now, createdBy: null, modifiedBy: null } });
+  createdDomains.push({ id: orgADept1.id, name: orgADept1.name, level: 3 });
+  const orgADept2 = await prisma.domain.create({ data: { name: 'OrgA - Americas - Engineering', parentId: orgARegion1.id, createdAt: now, modifiedAt: now, createdBy: null, modifiedBy: null } });
+  createdDomains.push({ id: orgADept2.id, name: orgADept2.name, level: 3 });
+  const orgBDept1 = await prisma.domain.create({ data: { name: 'OrgB - Asia - HR', parentId: orgBRegion1.id, createdAt: now, modifiedAt: now, createdBy: null, modifiedBy: null } });
+  createdDomains.push({ id: orgBDept1.id, name: orgBDept1.name, level: 3 });
+  const orgBDept2 = await prisma.domain.create({ data: { name: 'OrgB - Asia - Engineering', parentId: orgBRegion1.id, createdAt: now, modifiedAt: now, createdBy: null, modifiedBy: null } });
+  createdDomains.push({ id: orgBDept2.id, name: orgBDept2.name, level: 3 });
+  // Level 4: Teams
+  const orgADept1Team1 = await prisma.domain.create({ data: { name: 'OrgA - Americas - HR - Team Alpha', parentId: orgADept1.id, createdAt: now, modifiedAt: now, createdBy: null, modifiedBy: null } });
+  createdDomains.push({ id: orgADept1Team1.id, name: orgADept1Team1.name, level: 4 });
+  const orgADept2Team1 = await prisma.domain.create({ data: { name: 'OrgA - Americas - Engineering - Team Beta', parentId: orgADept2.id, createdAt: now, modifiedAt: now, createdBy: null, modifiedBy: null } });
+  createdDomains.push({ id: orgADept2Team1.id, name: orgADept2Team1.name, level: 4 });
+  const orgBDept1Team1 = await prisma.domain.create({ data: { name: 'OrgB - Asia - HR - Team Gamma', parentId: orgBDept1.id, createdAt: now, modifiedAt: now, createdBy: null, modifiedBy: null } });
+  createdDomains.push({ id: orgBDept1Team1.id, name: orgBDept1Team1.name, level: 4 });
+  const orgBDept2Team1 = await prisma.domain.create({ data: { name: 'OrgB - Asia - Engineering - Team Delta', parentId: orgBDept2.id, createdAt: now, modifiedAt: now, createdBy: null, modifiedBy: null } });
+  createdDomains.push({ id: orgBDept2Team1.id, name: orgBDept2Team1.name, level: 4 });
+  // Assign users to different orgs/levels
+  const userDomainMap = [orgA.id, orgBDept2Team1.id];
+  for (let i = 0; i < users.length; i++) {
+    const domainId = userDomainMap[i % userDomainMap.length];
+    const created = await prisma.user.create({ data: { ...users[i], createdAt: now, modifiedAt: now, domainId } });
     createdUsers.push(created);
   }
   const seedUserId = createdUsers[0].id;
@@ -38,49 +76,41 @@ export async function seedTestData(prisma: PrismaClient) {
     await prisma.user.update({ where: { id: u.id }, data: { createdBy: seedUserId, modifiedBy: seedUserId } });
   }
 
-  // Seed domains (hierarchical example)
-  const createdDomains: { id: number }[] = [];
-  const domainRoot = await prisma.domain.create({ data: { name: 'Global', createdAt: now, modifiedAt: now, createdBy: seedUserId, modifiedBy: seedUserId } });
-  createdDomains.push(domainRoot);
-  const domainEmea = await prisma.domain.create({ data: { name: 'EMEA', createdAt: now, modifiedAt: now, createdBy: seedUserId, modifiedBy: seedUserId } });
-  createdDomains.push(domainEmea);
-  const domainEurope = await prisma.domain.create({ data: { name: 'Europe', parentId: domainEmea.id, createdAt: now, modifiedAt: now, createdBy: seedUserId, modifiedBy: seedUserId } });
-  createdDomains.push(domainEurope);
+  // Update created users to set createdBy/modifiedBy to the seedUserId (self-referential)
+  for (const u of createdUsers) {
+    await prisma.user.update({ where: { id: u.id }, data: { createdBy: seedUserId, modifiedBy: seedUserId } });
+  }
 
   // Seed user domain access for the seed user to each created domain
   for (const d of createdDomains) {
     await prisma.userDomainAccess.create({ data: { userId: seedUserId, domainId: d.id, createdAt: now, modifiedAt: now, createdBy: seedUserId, modifiedBy: seedUserId } });
   }
 
-  // Additional access: grant bob (second seeded user) access to some domains for variety
+  // Additional access: grant bob (second seeded user) access to some deep subdomains for variety
   const bobId = createdUsers[1].id;
-  if (createdDomains.length > 1) {
-    // Bob gets access to the second and third domains (if present)
-    await prisma.userDomainAccess.create({ data: { userId: bobId, domainId: createdDomains[1].id, createdAt: now, modifiedAt: now, createdBy: seedUserId, modifiedBy: seedUserId } });
-    if (createdDomains[2]) {
-      await prisma.userDomainAccess.create({ data: { userId: bobId, domainId: createdDomains[2].id, createdAt: now, modifiedAt: now, createdBy: seedUserId, modifiedBy: seedUserId } });
-    }
-  }
+  await prisma.userDomainAccess.create({ data: { userId: bobId, domainId: orgADept1Team1.id, createdAt: now, modifiedAt: now, createdBy: seedUserId, modifiedBy: seedUserId } });
+  await prisma.userDomainAccess.create({ data: { userId: bobId, domainId: orgBDept2Team1.id, createdAt: now, modifiedAt: now, createdBy: seedUserId, modifiedBy: seedUserId } });
 
   // Seed countries (one for each continent)
+  // Assign countries to different orgs/subdomains/levels for variety
   const countrySeed = [
     {
-      name: 'Nigeria', capital: 'Abuja', population: 206139589, area: 923768, currency: 'NGN', continent: 'africa',
+      name: 'Nigeria', capital: 'Abuja', population: 206139589, area: 923768, currency: 'NGN', continent: 'africa', domainId: orgBRegion2.id,
     },
     {
-      name: 'China', capital: 'Beijing', population: 1402112000, area: 9596961, currency: 'CNY', continent: 'asia',
+      name: 'China', capital: 'Beijing', population: 1402112000, area: 9596961, currency: 'CNY', continent: 'asia', domainId: orgBDept2Team1.id,
     },
     {
-      name: 'France', capital: 'Paris', population: 67081000, area: 551695, currency: 'EUR', continent: 'europe',
+      name: 'France', capital: 'Paris', population: 67081000, area: 551695, currency: 'EUR', continent: 'europe', domainId: orgARegion2.id,
     },
     {
-      name: 'United States', capital: 'Washington, D.C.', population: 331893745, area: 9833517, currency: 'USD', continent: 'northamerica',
+      name: 'United States', capital: 'Washington, D.C.', population: 331893745, area: 9833517, currency: 'USD', continent: 'northamerica', domainId: orgADept2Team1.id,
     },
     {
-      name: 'Brazil', capital: 'Brasília', population: 212559417, area: 8515767, currency: 'BRL', continent: 'southamerica',
+      name: 'Brazil', capital: 'Brasília', population: 212559417, area: 8515767, currency: 'BRL', continent: 'southamerica', domainId: orgADept1Team1.id,
     },
     {
-      name: 'Australia', capital: 'Canberra', population: 25687041, area: 7692024, currency: 'AUD', continent: 'oceania',
+      name: 'Australia', capital: 'Canberra', population: 25687041, area: 7692024, currency: 'AUD', continent: 'oceania', domainId: orgA.id,
     },
   ];
   for (const country of countrySeed) {
@@ -91,6 +121,7 @@ export async function seedTestData(prisma: PrismaClient) {
         modifiedAt: now,
         createdBy: seedUserId,
         modifiedBy: seedUserId,
+        domainId: country.domainId,
       },
     });
   }
@@ -136,7 +167,11 @@ export async function seedTestData(prisma: PrismaClient) {
     { name: 'Tiger Moth', species: 'Arctiinae', habitat: 'Forests', diet: 'Herbivore', conservation_status: 'Least Concern', category: 'insects' },
   ];
   // Insert 10 copies of each animal (first copy keeps original name, duplicates get a numeric suffix)
-  for (const animal of animals) {
+  // Assign animals to different orgs/subdomains/levels for variety
+  const animalDomainIds = [orgADept1Team1.id, orgADept2Team1.id, orgBDept1Team1.id, orgBDept2Team1.id, orgARegion1.id, orgBRegion1.id, orgA.id, orgB.id];
+  for (let i = 0; i < animals.length; i++) {
+    const animal = animals[i];
+    const domainId = animalDomainIds[i % animalDomainIds.length];
     for (let copy = 0; copy < 10; copy++) {
       const name = copy === 0 ? animal.name : `${animal.name} ${copy + 1}`;
       await prisma.animal.create({
@@ -147,6 +182,7 @@ export async function seedTestData(prisma: PrismaClient) {
           modifiedAt: now,
           createdBy: seedUserId,
           modifiedBy: seedUserId,
+          domainId,
         },
       });
     }
