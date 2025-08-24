@@ -12,13 +12,16 @@ export const domainResolvers = {
       // Placeholder: returns all for now
       // Use paginate with includes to fetch creator/modifier and avoid N+1
       const result = await paginate({
-  model: prisma.domain,
-  where: search ? { name: { contains: search } } : {},
+        model: prisma.domain,
+        where: search ? { name: { contains: search } } : {},
         orderBy: orderBy ? [{ [orderBy.field.toLowerCase()]: orderBy.direction.toLowerCase() }] : [{ name: 'asc' }],
         first: args?.first || 20,
         include: { creator: true, modifier: true },
       });
 
+      if (!result.items || result.items.length === 0) {
+        return { data: [], pagination: { endCursor: null, startCursor: null, hasNext: false, hasPrevious: false, totalCount: 0 } };
+      }
       return {
         data: Array.isArray(result.items) ? result.items : [],
         pagination: result.pagination,

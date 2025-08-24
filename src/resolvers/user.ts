@@ -42,6 +42,9 @@ export const userResolvers = {
   include: { creator: true, modifier: true },
       });
 
+      if (!result.items || result.items.length === 0) {
+        return { data: [], pagination: { endCursor: null, startCursor: null, hasNext: false, hasPrevious: false, totalCount: 0 } };
+      }
       return {
         data: Array.isArray(result.items) ? result.items : [],
         pagination: result.pagination,

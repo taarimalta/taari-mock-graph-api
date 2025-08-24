@@ -21,7 +21,7 @@ export const countryResolvers = {
       const requestedDomains = context.viewDomains;
       const effectiveDomains = await getEffectiveViewDomains(prisma, userId, requestedDomains);
       if (!effectiveDomains || effectiveDomains.length === 0) {
-        return { data: [], pagination: { endCursor: null, hasNext: false } };
+  return { data: [], pagination: { endCursor: null, startCursor: null, hasNext: false, hasPrevious: false, totalCount: 0 } };
       }
       const where = {
         ...buildCountryWhere(args.filter, args.search),

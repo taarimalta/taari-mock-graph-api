@@ -49,8 +49,8 @@ export function getPaginationMetadata({
   const endItem = items[items.length - 1];
   // Compound cursor: encode all order fields and values
   return {
-    hasNext,
-    hasPrevious,
+    hasNext: !!hasNext,
+    hasPrevious: !!hasPrevious,
     startCursor: startItem
       ? encodeCursor({
           id: startItem.id,

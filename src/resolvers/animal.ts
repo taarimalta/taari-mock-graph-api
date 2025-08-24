@@ -26,7 +26,7 @@ export const animalResolvers = {
       const requestedDomains = context.viewDomains;
       const effectiveDomains = await getEffectiveViewDomains(prisma, context.userId, requestedDomains);
       if (!effectiveDomains || effectiveDomains.length === 0) {
-        return { data: [], pagination: { endCursor: null, hasNext: false } };
+  return { data: [], pagination: { endCursor: null, startCursor: null, hasNext: false, hasPrevious: false, totalCount: 0 } };
       }
       const where = {
         ...buildAnimalWhere(args.filter, args.search),
