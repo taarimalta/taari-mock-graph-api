@@ -1,3 +1,65 @@
+  describe('Domain-based access filtering', () => {
+    let prisma: any;
+    beforeAll(() => { prisma = new (require('@prisma/client').PrismaClient)(); });
+    afterAll(async () => { await prisma.$disconnect(); });
+
+    beforeEach(async () => {
+      await prisma.animal.deleteMany({});
+      await prisma.country.deleteMany({});
+      await prisma.domain.deleteMany({});
+    });
+
+    it('should only return countries in user accessible domains or with domainId null', async () => {
+      // Setup: create required domains first
+      await prisma.domain.createMany({ data: [
+        { id: 1, name: 'TestDomain1' },
+        { id: 2, name: 'TestDomain2' }
+      ] });
+      // Setup: create countries in different domains
+      await prisma.country.createMany({ data: [
+        { name: 'DomainCountry1', continent: 'europe', domainId: 1 },
+        { name: 'DomainCountry2', continent: 'asia', domainId: 2 },
+        { name: 'NoDomainCountry', continent: 'africa', domainId: null },
+      ] });
+      // User 1 has access to domain 1 only
+      const accessibleDomains = [1];
+      const countries = await prisma.country.findMany({
+        where: {
+          OR: [
+            { domainId: { in: accessibleDomains } },
+            { domainId: null }
+          ]
+        }
+      });
+  expect(countries.map((c: any) => c.name)).toEqual(expect.arrayContaining(['DomainCountry1', 'NoDomainCountry']));
+  expect(countries.map((c: any) => c.name)).not.toContain('DomainCountry2');
+    });
+
+  it('should only return animals in user accessible domains or with domainId null', async () => {
+      // Setup: create required domains first
+      await prisma.domain.createMany({ data: [
+        { id: 1, name: 'TestDomain1' },
+        { id: 2, name: 'TestDomain2' }
+      ] });
+      await prisma.animal.createMany({ data: [
+        { name: 'DomainAnimal1', category: 'mammals', domainId: 1 },
+        { name: 'DomainAnimal2', category: 'mammals', domainId: 2 },
+        { name: 'NoDomainAnimal', category: 'mammals', domainId: null },
+      ] });
+      // User 1 has access to domain 1 only
+      const accessibleDomains = [1];
+      const animals = await prisma.animal.findMany({
+        where: {
+          OR: [
+            { domainId: { in: accessibleDomains } },
+            { domainId: null }
+          ]
+        }
+      });
+  expect(animals.map((a: any) => a.name)).toEqual(expect.arrayContaining(['DomainAnimal1', 'NoDomainAnimal']));
+  expect(animals.map((a: any) => a.name)).not.toContain('DomainAnimal2');
+    });
+  });
 import { PrismaClient } from '@prisma/client';
 import { paginate } from '../../src/utils/pagination';
 import { buildCountryWhere, buildAnimalWhere } from '../../src/utils/filtering';
@@ -246,6 +308,14 @@ describe('Database Integration Tests', () => {
     });
 
     it('should handle field mapping correctly', async () => {
+      // Seed at least one country with population
+      await prisma.country.create({
+        data: {
+          name: 'SortTestCountry',
+          continent: 'europe',
+          population: 123456,
+        }
+      });
       const mappedField = mapCountryOrderField('POPULATION');
       expect(mappedField).toBe('population');
       

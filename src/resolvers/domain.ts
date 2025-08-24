@@ -26,7 +26,7 @@ export const domainResolvers = {
     },
   },
     Mutation: {
-    createDomain: async (_parent: any, { input }: { input: any }, context: { userId?: number }) => {
+  createDomain: async (_parent: any, { input }: { input: any }, context: { userId?: number; viewDomains?: number[]; createDomain?: number; prisma?: any; loadUser?: any; loadDomain?: any }) => {
       // createdBy/modifiedBy should come from context.userId
       const data = input || {};
       return prisma.domain.create({
@@ -38,7 +38,7 @@ export const domainResolvers = {
         },
       });
     },
-    updateDomain: async (_parent: any, { input }: { input: any }, context: { userId?: number }) => {
+  updateDomain: async (_parent: any, { input }: { input: any }, context: { userId?: number; viewDomains?: number[]; createDomain?: number; prisma?: any; loadUser?: any; loadDomain?: any }) => {
       const data = input || {};
       return prisma.domain.update({
         where: { id: Number(data.id) },

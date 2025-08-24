@@ -168,17 +168,18 @@ export const typeDefs = `
   Country information including identifiers, demographics, and geography.
   """
   type Country implements Node {
-    id: ID!
-    name: String!
-    capital: String
-    population: Int
-    area: Float
-    currency: String
-    continent: Continent!
-    createdAt: DateTime!
-    modifiedAt: DateTime!
-    createdBy: User
-    modifiedBy: User
+  id: ID!
+  name: String!
+  capital: String
+  population: Int
+  area: Float
+  currency: String
+  continent: Continent!
+  domainId: ID!
+  createdAt: DateTime!
+  modifiedAt: DateTime!
+  createdBy: User
+  modifiedBy: User
   }
 
   """

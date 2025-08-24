@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import type { Context } from '../context';
 import { buildAnimalWhere } from '../utils/filtering';
 import { mapAnimalOrderField, buildOrderBy } from '../utils/sorting';
 import { paginate } from '../utils/pagination';
@@ -8,19 +9,31 @@ const prisma = new PrismaClient();
 export const animalResolvers = {
   Query: {
     animalsPaginated: async (_: any, args: {
-      search?: string,
-      filter?: any,
-      orderBy?: any,
-      args?: any,
-      first?: number,
-      after?: string,
-      last?: number,
-      before?: string
-    }, context: { userId?: number }) => {
+    search?: string,
+    filter?: any,
+    orderBy?: any,
+    args?: any,
+    first?: number,
+    after?: string,
+    last?: number,
+    before?: string
+  }, context: { userId?: number; viewDomains?: number[]; createDomain?: number; prisma?: any; loadUser?: any; loadDomain?: any }) => {
       if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
         throw new Error('x-user-id header is required and must be a valid user ID number');
       }
-      const where = buildAnimalWhere(args.filter, args.search);
+      // Domain-based access filtering with user selection
+      const { getEffectiveViewDomains } = require('../utils/domainAccess');
+      const requestedDomains = context.viewDomains;
+      const effectiveDomains = await getEffectiveViewDomains(prisma, context.userId, requestedDomains);
+      if (!effectiveDomains || effectiveDomains.length === 0) {
+        return { data: [], pagination: { endCursor: null, hasNext: false } };
+      }
+      const where = {
+        ...buildAnimalWhere(args.filter, args.search),
+        OR: [
+          { domainId: { in: effectiveDomains } }
+        ]
+      };
       const orderField = args.orderBy?.field || 'NAME';
       const direction = args.orderBy?.direction || 'ASC';
       // Always use compound sorting: primary field + id as tiebreaker
@@ -86,19 +99,29 @@ export const animalResolvers = {
         pagination: result.pagination,
       };
     },
-    animal: (_: any, args: { id: number }, context: { userId: number }) => {
-      if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
+  animal: async (_: any, args: { id: number }, context: { userId?: number; viewDomains?: number[]; createDomain?: number; prisma?: any; loadUser?: any; loadDomain?: any }) => {
+  if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
         throw new Error('x-user-id header is required and must be a valid user ID number');
       }
-      return prisma.animal.findUnique({ where: { id: Number(args.id) } });
+      const animal = await prisma.animal.findUnique({ where: { id: Number(args.id) } });
+      if (!animal) return null;
+      // Do not allow access if domainId is null
+      if (animal.domainId == null) return null;
+      const { isUserDomainAccessible } = require('../utils/domainAccess');
+      const accessible = await isUserDomainAccessible(prisma, context.userId, animal.domainId);
+      return accessible ? animal : null;
     },
   },
   Mutation: {
-    createAnimal: async (_: any, args: { input: any }, context: { userId?: number }) => {
+  createAnimal: async (_: any, args: { input: any }, context: { userId?: number; viewDomains?: number[]; createDomain?: number; prisma?: any; loadUser?: any; loadDomain?: any }) => {
       if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
         throw new Error('x-user-id header is required and must be a valid user ID number');
       }
       const input = args.input || {};
+      // Use x-create-domain header if present, else input.domainId
+      const requestedDomain = context.createDomain ?? input.domainId;
+      const { validateCreateDomain } = require('../utils/domainAccess');
+      const domainId = await validateCreateDomain(prisma, context.userId, requestedDomain);
       return await prisma.animal.create({
         data: {
           name: input.name,
@@ -107,6 +130,7 @@ export const animalResolvers = {
           diet: input.diet,
           conservation_status: input.conservation_status,
           category: input.category,
+          domainId,
           createdBy: context.userId,
           modifiedBy: context.userId,
           createdAt: new Date(),
@@ -114,12 +138,23 @@ export const animalResolvers = {
         },
       });
     },
-    updateAnimal: async (_: any, args: { input: any }, context: { userId?: number }) => {
+  updateAnimal: async (_: any, args: { input: any }, context: { userId?: number; viewDomains?: number[]; createDomain?: number; prisma?: any; loadUser?: any; loadDomain?: any }) => {
       if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
         throw new Error('x-user-id header is required and must be a valid user ID number');
       }
       const input = args.input || {};
-      return await prisma.animal.update({
+      const animal = await context.prisma.animal.findUnique({ where: { id: Number(input.id) } });
+      if (!animal) throw new Error('Animal not found');
+      const { isUserDomainAccessible, validateCreateDomain } = require('../utils/domainAccess');
+      let domainId = animal.domainId;
+      // If x-create-domain is present, validate access and assign
+      if (context.createDomain) {
+        await validateCreateDomain(context.prisma, context.userId, context.createDomain);
+        domainId = context.createDomain;
+      }
+      const hasAccess = await isUserDomainAccessible(context.prisma, context.userId, domainId);
+      if (!hasAccess) throw new Error('Access denied: You do not have permission to update this animal');
+      return await context.prisma.animal.update({
         where: { id: Number(input.id) },
         data: {
           ...(input.name !== undefined ? { name: input.name } : {}),
@@ -128,15 +163,17 @@ export const animalResolvers = {
           ...(input.diet !== undefined ? { diet: input.diet } : {}),
           ...(input.conservation_status !== undefined ? { conservation_status: input.conservation_status } : {}),
           ...(input.category !== undefined ? { category: input.category } : {}),
+          domainId,
           modifiedBy: context.userId,
           modifiedAt: new Date(),
         },
       });
     },
-    deleteAnimal: (_: any, args: { id: number }, context: { userId: number }) => {
+  deleteAnimal: (_: any, args: { id: number }, context: { userId?: number; viewDomains?: number[]; createDomain?: number; prisma?: any; loadUser?: any; loadDomain?: any }) => {
       if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
         throw new Error('x-user-id header is required and must be a valid user ID number');
       }
+      // context type extended for future domain assignment
       return prisma.animal.delete({ where: { id: Number(args.id) } });
     },
   },

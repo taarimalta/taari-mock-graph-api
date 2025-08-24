@@ -59,7 +59,7 @@ describe('UserDomainAccess GraphQL API', () => {
         `,
         variables: { userId, domainId },
       },
-      { contextValue: { userId } }
+  { contextValue: { userId, viewDomains: undefined, createDomain: undefined } }
     );
     expect(res.body.kind).toBe('single');
     if (res.body.kind !== 'single') throw new Error('Expected single result');

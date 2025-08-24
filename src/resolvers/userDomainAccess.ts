@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export const userDomainAccessResolvers = {
   Query: {
-    userDomainAccessPaginated: async (_: any, args: any, context: { userId?: number }) => {
+  userDomainAccessPaginated: async (_: any, args: any, context: { userId?: number; viewDomains?: number[]; createDomain?: number; prisma?: any; loadUser?: any; loadDomain?: any }) => {
       if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
         throw new Error('x-user-id header is required and must be a valid user ID number');
       }
@@ -50,7 +50,7 @@ export const userDomainAccessResolvers = {
       return !!found;
     },
 
-    userAccessibleDomains: async (_: any, { userId, args }: { userId: number; args?: any }, context: { userId?: number }) => {
+  userAccessibleDomains: async (_: any, { userId, args }: { userId: number; args?: any }, context: { userId?: number; viewDomains?: number[]; createDomain?: number; prisma?: any; loadUser?: any; loadDomain?: any }) => {
       if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
         throw new Error('x-user-id header is required and must be a valid user ID number');
       }
@@ -71,7 +71,7 @@ export const userDomainAccessResolvers = {
       return { data: Array.isArray(result.items) ? result.items : [], pagination: result.pagination };
     },
 
-    domainAccessibleUsers: async (_: any, { domainId, args }: { domainId: number; args?: any }, context: { userId?: number }) => {
+  domainAccessibleUsers: async (_: any, { domainId, args }: { domainId: number; args?: any }, context: { userId?: number; viewDomains?: number[]; createDomain?: number; prisma?: any; loadUser?: any; loadDomain?: any }) => {
       if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
         throw new Error('x-user-id header is required and must be a valid user ID number');
       }
@@ -94,7 +94,7 @@ export const userDomainAccessResolvers = {
   },
 
   Mutation: {
-    grantDomainAccess: async (_: any, { input }: { input: any }, context: { userId?: number }) => {
+  grantDomainAccess: async (_: any, { input }: { input: any }, context: { userId?: number; viewDomains?: number[]; createDomain?: number; prisma?: any; loadUser?: any; loadDomain?: any }) => {
       if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
         throw new Error('x-user-id header is required and must be a valid user ID number');
       }
@@ -110,7 +110,7 @@ export const userDomainAccessResolvers = {
       });
     },
 
-    revokeDomainAccess: async (_: any, { input }: { input: any }, context: { userId?: number }) => {
+  revokeDomainAccess: async (_: any, { input }: { input: any }, context: { userId?: number; viewDomains?: number[]; createDomain?: number; prisma?: any; loadUser?: any; loadDomain?: any }) => {
       if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
         throw new Error('x-user-id header is required and must be a valid user ID number');
       }
@@ -123,7 +123,7 @@ export const userDomainAccessResolvers = {
       return prisma.userDomainAccess.delete({ where: { id: existing.id }, include: { user: true, domain: true, creator: true, modifier: true } });
     },
 
-    grantMultipleDomainAccess: async (_: any, { userId, domainIds }: { userId: number; domainIds: number[] }, context: { userId?: number }) => {
+  grantMultipleDomainAccess: async (_: any, { userId, domainIds }: { userId: number; domainIds: number[] }, context: { userId?: number; viewDomains?: number[]; createDomain?: number; prisma?: any; loadUser?: any; loadDomain?: any }) => {
       if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
         throw new Error('x-user-id header is required and must be a valid user ID number');
       }
@@ -147,7 +147,7 @@ export const userDomainAccessResolvers = {
       return created;
     },
 
-    revokeMultipleDomainAccess: async (_: any, { userId, domainIds }: { userId: number; domainIds: number[] }, context: { userId?: number }) => {
+  revokeMultipleDomainAccess: async (_: any, { userId, domainIds }: { userId: number; domainIds: number[] }, context: { userId?: number; viewDomains?: number[]; createDomain?: number; prisma?: any; loadUser?: any; loadDomain?: any }) => {
       if (!context.userId || !Number.isFinite(context.userId) || context.userId <= 0) {
         throw new Error('x-user-id header is required and must be a valid user ID number');
       }

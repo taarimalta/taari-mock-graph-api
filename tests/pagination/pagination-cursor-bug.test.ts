@@ -1,3 +1,4 @@
+export {};
 import { ApolloServer } from '@apollo/server';
 import { createContext } from '../../src/context';
 import { typeDefs } from '../../src/schema/typeDefs';
@@ -58,7 +59,7 @@ describe('Cursor Pagination - API scenario', () => {
     // Assert no overlap between pages
     const afterPageIds = afterData.map((a: any) => a.id);
     const firstPageIds = firstData.map((a: any) => a.id);
-    firstPageIds.forEach(id => {
+    firstPageIds.forEach((id: any) => {
       expect(afterPageIds).not.toContain(id);
     });
   });
@@ -89,7 +90,7 @@ describe('Cursor Pagination - API scenario', () => {
     // Assert no overlap between pages
     const afterPageIds = afterData.map((a: any) => a.id);
     const firstPageIds = firstData.map((a: any) => a.id);
-    firstPageIds.forEach(id => {
+    firstPageIds.forEach((id: any) => {
       expect(afterPageIds).not.toContain(id);
     });
   });
