@@ -1,9 +1,9 @@
 import { ApolloServer } from '@apollo/server';
-import { typeDefs } from '../src/schema/typeDefs';
-import { userResolvers } from '../src/resolvers/user';
-import { countryResolvers } from '../src/resolvers/country';
-import { animalResolvers } from '../src/resolvers/animal';
-import { createContext } from '../src/context';
+import { typeDefs } from '../../src/schema/typeDefs';
+import { userResolvers } from '../../src/resolvers/user';
+import { countryResolvers } from '../../src/resolvers/country';
+import { animalResolvers } from '../../src/resolvers/animal';
+import { createContext } from '../../src/context';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();

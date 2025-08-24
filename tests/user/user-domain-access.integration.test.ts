@@ -1,8 +1,8 @@
 import { ApolloServer } from '@apollo/server';
-import { typeDefs } from '../src/schema/typeDefs';
-import { userDomainAccessResolvers } from '../src/resolvers/userDomainAccess';
-import { domainResolvers } from '../src/resolvers/domain';
-import { userResolvers } from '../src/resolvers/user';
+import { typeDefs } from '../../src/schema/typeDefs';
+import { userDomainAccessResolvers } from '../../src/resolvers/userDomainAccess';
+import { domainResolvers } from '../../src/resolvers/domain';
+import { userResolvers } from '../../src/resolvers/user';
 
 describe('UserDomainAccess GraphQL API', () => {
   let server: ApolloServer;

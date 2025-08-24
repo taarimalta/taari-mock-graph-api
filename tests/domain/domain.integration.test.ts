@@ -1,6 +1,6 @@
 import { ApolloServer } from '@apollo/server';
-import { typeDefs } from '../src/schema/typeDefs';
-import { domainResolvers } from '../src/resolvers/domain';
+import { typeDefs } from '../../src/schema/typeDefs';
+import { domainResolvers } from '../../src/resolvers/domain';
 
 describe('Domain GraphQL API', () => {
   let server: ApolloServer;
