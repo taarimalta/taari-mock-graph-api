@@ -1,6 +1,6 @@
 # taari Mock GraphQL API
 
-A developer-friendly mock GraphQL API for rapid prototyping and testing, built with TypeScript, Apollo Server, Prisma, and SQLite.
+A developer-friendly mock GraphQL API with domain-based access control, built with TypeScript, Apollo Server, Prisma, and SQLite. Designed as a backend for localStorage-based frontend applications with user and domain switching capabilities.
 
 ## 🚀 Stack
 - **Node.js** (TypeScript)
@@ -25,6 +25,29 @@ A developer-friendly mock GraphQL API for rapid prototyping and testing, built w
    # or to restart: npm run dev:restart
    ```
    The API will be available at [http://localhost:4000/graphql](http://localhost:4000/graphql)
+
+## 🔐 Authentication & Headers
+
+**Important:** All mutations require the `x-user-id` header. The API supports three key headers for multi-tenant operations:
+
+- **`x-user-id`**: Current logged-in user (required for mutations)
+- **`x-view-domains`**: Comma-separated domains to view (e.g., "1,2,5")  
+- **`x-create-domain`**: Single domain where new data gets assigned
+
+```bash
+curl -H "x-user-id: 1" -H "x-view-domains: 1,2" -H "x-create-domain: 1" \
+     -H "Content-Type: application/json" \
+     -d '{"query":"mutation { createCountry(name: \"Test\") { id } }"}' \
+     http://localhost:4000/graphql
+```
+
+**Frontend Integration:** These headers are typically populated from localStorage values, enabling user/domain switching without traditional authentication flows.
+
+## 📚 Documentation
+
+- **[Security Model](docs/security.md)** - Detailed domain-based access control documentation
+- **[API Examples](http/)** - GraphQL queries and test scripts
+- **[Developer Guide](.github/copilot-instructions.md)** - Architecture and coding patterns
 
 
 ## 🧩 Pagination, Sorting, and Filtering
@@ -350,12 +373,27 @@ This will **delete all existing countries and animals** and repopulate the datab
 - Prisma models use `String` for enums due to SQLite limitations; GraphQL API still exposes enums.
 - All code is in `src/` and is hot-reloaded in dev mode.
 - You can edit the GraphQL schema in `src/schema/typeDefs.ts` and resolvers in `src/resolvers/`.
+- Tests use `--runInBand` flag due to SQLite concurrency limitations.
+- See [developer instructions](.github/copilot-instructions.md) for coding patterns and architecture details.
+
+## 🔧 Available Scripts
+- `npm run dev` - Start development server with hot reload
+- `npm run dev:restart` - Kill and restart dev server
+- `npm test` - Run integration tests
+- `npm run db:generate` - Generate Prisma client
+- `npm run db:migrate` - Run database migrations  
+- `npm run db:seed` - Reset and reseed database (destructive)
 
 ## 📂 Project Structure
 ```
-mock-graph-api/
+taari-mock-graph-api/
+├── docs/             # Documentation (security model, etc.)
 ├── prisma/           # Prisma schema & migrations
 ├── src/              # TypeScript source (schema, resolvers, context)
+│   ├── resolvers/    # GraphQL resolvers
+│   ├── schema/       # GraphQL type definitions
+│   └── utils/        # Pagination, filtering, domain access
+├── tests/            # Integration tests
 ├── http/             # Example GraphQL queries & test scripts
 ├── package.json      # Scripts & dependencies
 └── README.md         # This file
