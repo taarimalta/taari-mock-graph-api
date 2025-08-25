@@ -25,7 +25,15 @@ export async function seedTestData(prisma: PrismaClient) {
   // We'll assign all users to the root domain (domainRoot)
   const users = [
     { username: 'alice', email: 'alice@example.com', firstName: 'Alice', lastName: 'Anderson' },
-    { username: 'bob', email: 'bob@example.com', firstName: 'Bob', lastName: 'Brown' }
+    { username: 'bob', email: 'bob@example.com', firstName: 'Bob', lastName: 'Brown' },
+    { username: 'carol', email: 'carol@example.com', firstName: 'Carol', lastName: 'Clark' },
+    { username: 'dave', email: 'dave@example.com', firstName: 'Dave', lastName: 'Davis' },
+    { username: 'eve', email: 'eve@example.com', firstName: 'Eve', lastName: 'Evans' },
+    { username: 'frank', email: 'frank@example.com', firstName: 'Frank', lastName: 'Foster' },
+    { username: 'grace', email: 'grace@example.com', firstName: 'Grace', lastName: 'Green' },
+    { username: 'heidi', email: 'heidi@example.com', firstName: 'Heidi', lastName: 'Hall' },
+    { username: 'ivan', email: 'ivan@example.com', firstName: 'Ivan', lastName: 'Iverson' },
+    { username: 'judy', email: 'judy@example.com', firstName: 'Judy', lastName: 'Jones' }
   ];
   const createdUsers: { id: number }[] = [];
   // Seed domains (4-level organization hierarchy)
@@ -63,7 +71,19 @@ export async function seedTestData(prisma: PrismaClient) {
   const orgBDept2Team1 = await prisma.domain.create({ data: { name: 'OrgB - Asia - Engineering - Team Delta', parentId: orgBDept2.id, createdAt: now, modifiedAt: now, createdBy: null, modifiedBy: null } });
   createdDomains.push({ id: orgBDept2Team1.id, name: orgBDept2Team1.name, level: 4 });
   // Assign users to different orgs/levels
-  const userDomainMap = [orgA.id, orgBDept2Team1.id];
+  // Assign each user to a different domain for variety
+  const userDomainMap = [
+    orgA.id,                // alice: OrgA (root)
+    orgB.id,                // bob: OrgB (root)
+    orgARegion1.id,         // carol: OrgA - Americas (region)
+    orgARegion2.id,         // dave: OrgA - Europe (region)
+    orgBRegion1.id,         // eve: OrgB - Asia (region)
+    orgBRegion2.id,         // frank: OrgB - Africa (region)
+    orgADept1.id,           // grace: OrgA - Americas - HR (department)
+    orgADept2Team1.id,      // heidi: OrgA - Americas - Engineering - Team Beta (team)
+    orgBDept1Team1.id,      // ivan: OrgB - Asia - HR - Team Gamma (team)
+    orgBDept2Team1.id       // judy: OrgB - Asia - Engineering - Team Delta (team)
+  ];
   for (let i = 0; i < users.length; i++) {
     const domainId = userDomainMap[i % userDomainMap.length];
     const created = await prisma.user.create({ data: { ...users[i], createdAt: now, modifiedAt: now, domainId } });
@@ -71,25 +91,41 @@ export async function seedTestData(prisma: PrismaClient) {
   }
   const seedUserId = createdUsers[0].id;
 
-  // Update created users to set createdBy/modifiedBy to the seedUserId (self-referential)
+  // Update created users to set createdBy/modifiedBy to their own id (self-referential)
   for (const u of createdUsers) {
-    await prisma.user.update({ where: { id: u.id }, data: { createdBy: seedUserId, modifiedBy: seedUserId } });
+    await prisma.user.update({ where: { id: u.id }, data: { createdBy: u.id, modifiedBy: u.id } });
   }
 
-  // Update created users to set createdBy/modifiedBy to the seedUserId (self-referential)
-  for (const u of createdUsers) {
-    await prisma.user.update({ where: { id: u.id }, data: { createdBy: seedUserId, modifiedBy: seedUserId } });
+  // Assign varied domain access to each user
+  // alice: OrgA (root) - broadest access (all domains under OrgA)
+  for (const d of createdDomains.filter(d => d.name.startsWith('OrgA'))) {
+    await prisma.userDomainAccess.create({ data: { userId: createdUsers[0].id, domainId: d.id, createdAt: now, modifiedAt: now, createdBy: createdUsers[0].id, modifiedBy: createdUsers[0].id } });
   }
-
-  // Seed user domain access for the seed user to each created domain
-  for (const d of createdDomains) {
-    await prisma.userDomainAccess.create({ data: { userId: seedUserId, domainId: d.id, createdAt: now, modifiedAt: now, createdBy: seedUserId, modifiedBy: seedUserId } });
+  // bob: OrgB (root) - broadest access (all domains under OrgB)
+  for (const d of createdDomains.filter(d => d.name.startsWith('OrgB'))) {
+    await prisma.userDomainAccess.create({ data: { userId: createdUsers[1].id, domainId: d.id, createdAt: now, modifiedAt: now, createdBy: createdUsers[1].id, modifiedBy: createdUsers[1].id } });
   }
-
-  // Additional access: grant bob (second seeded user) access to some deep subdomains for variety
-  const bobId = createdUsers[1].id;
-  await prisma.userDomainAccess.create({ data: { userId: bobId, domainId: orgADept1Team1.id, createdAt: now, modifiedAt: now, createdBy: seedUserId, modifiedBy: seedUserId } });
-  await prisma.userDomainAccess.create({ data: { userId: bobId, domainId: orgBDept2Team1.id, createdAt: now, modifiedAt: now, createdBy: seedUserId, modifiedBy: seedUserId } });
+  // carol: OrgA - Americas (region) - access to Americas region and its departments/teams
+  for (const d of createdDomains.filter(d => d.name.startsWith('OrgA - Americas'))) {
+    await prisma.userDomainAccess.create({ data: { userId: createdUsers[2].id, domainId: d.id, createdAt: now, modifiedAt: now, createdBy: createdUsers[2].id, modifiedBy: createdUsers[2].id } });
+  }
+  // dave: OrgA - Europe (region) - only Europe region
+  await prisma.userDomainAccess.create({ data: { userId: createdUsers[3].id, domainId: orgARegion2.id, createdAt: now, modifiedAt: now, createdBy: createdUsers[3].id, modifiedBy: createdUsers[3].id } });
+  // eve: OrgB - Asia (region) - access to Asia region and its departments/teams
+  for (const d of createdDomains.filter(d => d.name.startsWith('OrgB - Asia'))) {
+    await prisma.userDomainAccess.create({ data: { userId: createdUsers[4].id, domainId: d.id, createdAt: now, modifiedAt: now, createdBy: createdUsers[4].id, modifiedBy: createdUsers[4].id } });
+  }
+  // frank: OrgB - Africa (region) - only Africa region
+  await prisma.userDomainAccess.create({ data: { userId: createdUsers[5].id, domainId: orgBRegion2.id, createdAt: now, modifiedAt: now, createdBy: createdUsers[5].id, modifiedBy: createdUsers[5].id } });
+  // grace: OrgA - Americas - HR (department) - only HR department
+  await prisma.userDomainAccess.create({ data: { userId: createdUsers[6].id, domainId: orgADept1.id, createdAt: now, modifiedAt: now, createdBy: createdUsers[6].id, modifiedBy: createdUsers[6].id } });
+  // heidi: OrgA - Americas - Engineering - Team Beta (team) - only Team Beta
+  await prisma.userDomainAccess.create({ data: { userId: createdUsers[7].id, domainId: orgADept2Team1.id, createdAt: now, modifiedAt: now, createdBy: createdUsers[7].id, modifiedBy: createdUsers[7].id } });
+  // ivan: OrgB - Asia - HR - Team Gamma (team) - only Team Gamma
+  await prisma.userDomainAccess.create({ data: { userId: createdUsers[8].id, domainId: orgBDept1Team1.id, createdAt: now, modifiedAt: now, createdBy: createdUsers[8].id, modifiedBy: createdUsers[8].id } });
+  // judy: OrgB - Asia - Engineering - Team Delta (team) - only Team Delta, plus OrgB root for variety
+  await prisma.userDomainAccess.create({ data: { userId: createdUsers[9].id, domainId: orgBDept2Team1.id, createdAt: now, modifiedAt: now, createdBy: createdUsers[9].id, modifiedBy: createdUsers[9].id } });
+  await prisma.userDomainAccess.create({ data: { userId: createdUsers[9].id, domainId: orgB.id, createdAt: now, modifiedAt: now, createdBy: createdUsers[9].id, modifiedBy: createdUsers[9].id } });
 
   // Seed countries (one for each continent)
   // Assign countries to different orgs/subdomains/levels for variety
